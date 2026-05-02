@@ -1,2 +1,275 @@
-Nothing here...
+<!DOCTYPE html>
+<html lang="ja">
 
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Aura Drive | Advanced Web Navigation</title>
+    <meta name="description" content="Next-generation web-based car navigation system powered by OpenStreetMap.">
+
+    <!-- Google Fonts: Outfit for a modern, tech feel -->
+    <link rel="icon" href="icons/icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <!-- MapLibre GL JS -->
+    <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+    <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#00d2ff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Aura Drive">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div id="app">
+        <!-- PWA Install Prompt (top-left, shown when not in standalone mode) -->
+        <div id="pwa-prompt" class="glass hidden">
+            <div class="pwa-prompt-icon">🛸</div>
+            <div class="pwa-prompt-text">
+                <strong>Aura Drive</strong>
+                <span>ホーム画面に追加してください</span>
+            </div>
+            <div class="pwa-prompt-actions">
+                <button id="btn-pwa-install">追加</button>
+                <button id="btn-pwa-dismiss">後で</button>
+            </div>
+        </div>
+
+        <!-- Background Map -->
+        <div id="map"></div>
+
+        <!-- Glass Overlay UI -->
+        <header class="top-bar glass">
+            <div class="search-container">
+                <i data-lucide="search" class="icon-search"></i>
+                <input type="text" id="dest-search" placeholder="目的地を検索..." autocomplete="off">
+                <button id="btn-clear-search" class="clear-btn hidden"><i data-lucide="x"></i></button>
+            </div>
+        </header>
+
+        <!-- Search Results Dropdown -->
+        <div id="search-results" class="glass hidden"></div>
+
+        <!-- Route Info Banner -->
+        <div id="route-banner" class="glass hidden">
+            <div class="route-banner-info">
+                <i data-lucide="map-pin" class="route-pin-icon"></i>
+                <div class="route-dest-text">
+                    <span id="route-dest-name">---</span>
+                    <span id="route-summary">ルートを計算中...</span>
+                </div>
+            </div>
+            <div class="route-banner-actions">
+                <button id="btn-start-nav" class="btn-start-nav hidden">
+                    <i data-lucide="play"></i> 案内開始
+                </button>
+                <button id="btn-cancel-route" title="ルートをキャンセル">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Nav Info Popup + History Card: top-right, swaps based on navigation state -->
+        <div id="nav-info-popup" class="hidden">
+            <!-- Main Info Card -->
+            <div class="glass nav-card">
+                <div class="nav-dest-label" id="nav-info-dest-name">---</div>
+                <div class="h-divider" style="margin:10px 0"></div>
+                <div class="popup-totals">
+                    <div class="popup-stat">
+                        <span class="label">残り</span>
+                        <span class="popup-stat-val" id="nav-remaining">---</span>
+                    </div>
+                    <div class="popup-stat">
+                        <span class="label">到着</span>
+                        <span class="popup-stat-val" id="nav-eta-panel">--:--</span>
+                    </div>
+                    <button id="btn-stop-nav" title="ナビ終了">
+                        <i data-lucide="square"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Next Turn Card -->
+            <div class="glass nav-card nav-card-next">
+                <div class="nav-maneuver">
+                    <div class="nav-turn-box">
+                        <i data-lucide="arrow-up" id="nav-turn-icon"></i>
+                    </div>
+                    <div class="nav-step-info">
+                        <span class="nav-step-dist" id="nav-step-dist">---</span>
+                        <span class="nav-step-road" id="nav-step-road">---</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search History Card: shown when not navigating -->
+        <div id="search-history-card" class="glass nav-card hidden">
+            <div class="history-header">
+                <span class="label" style="font-size:0.75rem">最近の目的地</span>
+                <button id="btn-clear-history" title="履歴を削除"><i data-lucide="trash-2"></i></button>
+            </div>
+            <div id="history-list"></div>
+        </div>
+
+        <!-- Control Panel: bottom-right vertical stack -->
+        <div id="ctrl-panel" class="glass">
+            <div class="ctrl-speed">
+                <span class="label">SPEED</span>
+                <span class="value" id="speed-val">0</span>
+                <span class="unit">km/h</span>
+            </div>
+            <div class="ctrl-sep"></div>
+            <button class="control-btn-mini" id="btn-locate" title="現在地">
+                <i data-lucide="navigation"></i>
+            </button>
+            <div class="ctrl-sep"></div>
+            <button class="control-btn-mini" id="btn-zoom-in" title="拡大">
+                <i data-lucide="plus"></i>
+            </button>
+            <button class="control-btn-mini" id="btn-zoom-out" title="縮小">
+                <i data-lucide="minus"></i>
+            </button>
+            <div class="ctrl-sep"></div>
+            <button class="control-btn-mini" id="btn-3d" title="3D表示切替">
+                <i data-lucide="box"></i>
+            </button>
+            <button class="control-btn-mini" id="btn-layers" title="レイヤー切替">
+                <i data-lucide="layers"></i>
+            </button>
+        </div>
+
+        <!-- Interaction Overlay (Search Results etc) -->
+        <div id="overlay-container" class="hidden"></div>
+
+        <!-- Layer Menu -->
+        <div id="layer-menu" class="glass hidden">
+            <div class="menu-header">
+                <h3>マップ表示設定</h3>
+                <button id="close-layers"><i data-lucide="x"></i></button>
+            </div>
+            <div class="layer-options">
+                <div class="layer-section">
+                    <p class="section-label">ベースマップ</p>
+                    <button class="layer-opt" data-style="day">
+                        <i data-lucide="sun"></i> <span>Dayモード</span>
+                    </button>
+                    <button class="layer-opt active" data-style="night">
+                        <i data-lucide="moon"></i> <span>ナイトモード</span>
+                    </button>
+                    <button class="layer-opt" data-style="satellite">
+                        <i data-lucide="globe"></i> <span>衛星写真</span>
+                    </button>
+                    <button class="layer-opt" data-style="gsi">
+                        <i data-lucide="map"></i> <span>国土地理院地図</span>
+                    </button>
+                </div>
+                <div class="h-divider"></div>
+                <div class="layer-section">
+                    <p class="section-label">方位</p>
+                    <div class="layer-opt-group">
+                        <button class="view-opt active" id="view-north-up">
+                            <i data-lucide="compass"></i>北を上
+                        </button>
+                        <button class="view-opt" id="view-heading-up">
+                            <i data-lucide="navigation"></i>進行方向
+                        </button>
+                    </div>
+                </div>
+                <div class="layer-section">
+                    <p class="section-label">傾き</p>
+                    <div class="layer-opt-group">
+                        <button class="view-opt active" id="view-flat">
+                            <i data-lucide="square"></i>平面
+                        </button>
+                        <button class="view-opt" id="view-tilt">
+                            <i data-lucide="box"></i>俯角あり
+                        </button>
+                    </div>
+                </div>
+                <div class="h-divider"></div>
+                <div class="layer-section">
+                    <p class="section-label">UI配置 (ハンドル位置)</p>
+                    <div class="layer-opt-group">
+                        <button class="view-opt active" id="view-rhd">
+                            <i data-lucide="align-right"></i>右ハンドル
+                        </button>
+                        <button class="view-opt" id="view-lhd">
+                            <i data-lucide="align-left"></i>左ハンドル
+                        </button>
+                    </div>
+                </div>
+                <div class="h-divider"></div>
+                <div class="layer-section">
+                    <p class="section-label">追加情報</p>
+                    <button class="layer-opt overlay-toggle" id="toggle-highway" data-overlay="highway">
+                        <i data-lucide="zap"></i> <span>高速道路を強調</span>
+                    </button>
+                    <button class="layer-opt overlay-toggle" id="toggle-railway" data-overlay="railway">
+                        <i data-lucide="train"></i> <span>鉄道路線</span>
+                    </button>
+                    <button class="layer-opt overlay-toggle" id="toggle-rain" data-overlay="rain">
+                        <i data-lucide="cloud-rain"></i> <span>雨雲レーダー</span>
+                    </button>
+                    <button class="layer-opt overlay-toggle" id="toggle-topo" data-overlay="topo">
+                        <i data-lucide="mountain"></i> <span>地形図（等高線）</span>
+                    </button>
+                    <button class="layer-opt overlay-toggle" id="toggle-cycling" data-overlay="cycling">
+                        <i data-lucide="bike"></i> <span>自転車レーン</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').catch(console.warn);
+        }
+
+        // PWA Install Prompt
+        let deferredInstallPrompt = null;
+        const pwaPrompt = document.getElementById('pwa-prompt');
+        const btnInstall = document.getElementById('btn-pwa-install');
+        const btnDismiss = document.getElementById('btn-pwa-dismiss');
+
+        const isStandalone = () =>
+            window.matchMedia('(display-mode: standalone)').matches ||
+            window.navigator.standalone ||
+            document.referrer.includes('android-app://');
+
+        window.addEventListener('beforeinstallprompt', e => {
+            e.preventDefault();
+            deferredInstallPrompt = e;
+            if (!isStandalone() && !sessionStorage.getItem('pwa_dismissed')) {
+                pwaPrompt.classList.remove('hidden');
+            }
+        });
+
+        btnInstall && btnInstall.addEventListener('click', async () => {
+            if (!deferredInstallPrompt) return;
+            deferredInstallPrompt.prompt();
+            const { outcome } = await deferredInstallPrompt.userChoice;
+            deferredInstallPrompt = null;
+            pwaPrompt.classList.add('hidden');
+        });
+
+        btnDismiss && btnDismiss.addEventListener('click', () => {
+            pwaPrompt.classList.add('hidden');
+            sessionStorage.setItem('pwa_dismissed', '1');
+        });
+    </script>
+</body>
+
+</html>
