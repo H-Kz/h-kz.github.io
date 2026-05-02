@@ -170,6 +170,8 @@
 
 .btn-list:hover {
     background: rgba(255, 255, 255, 0.9);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 
 .btn-install {
@@ -182,6 +184,8 @@
 
 .btn-install:hover {
     background: #16a34a;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(34, 197, 94, 0.4);
 }
 
 .btn-desc {
@@ -195,9 +199,36 @@
     text-align: left;
 }
 
+.landing-btn:hover .arrow-icon {
+    transform: translateX(4px);
+}
+
 .arrow-icon {
-    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     opacity: 0.7;
+    transition: transform 0.3s ease;
+}
+
+.arrow-icon img {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+}
+
+.btn-recommend .arrow-icon img,
+.btn-install .arrow-icon img {
+    filter: brightness(0) invert(1);
+}
+
+.btn-recommend.gps-disabled .arrow-icon img {
+    filter: none;
+}
+
+[data-theme="dark"] .btn-recommend.gps-disabled .arrow-icon img,
+[data-theme="dark"] .btn-list .arrow-icon img {
+    filter: brightness(0) invert(1);
 }
 
 .landing-disclaimer {

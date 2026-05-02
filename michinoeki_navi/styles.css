@@ -1089,6 +1089,7 @@ main {
 .gps-indicator.active {
     background: #22c55e;
     box-shadow: 0 0 8px #22c55e;
+    animation: pulse-green 2s infinite;
 }
 
 /* Unified Marker */
