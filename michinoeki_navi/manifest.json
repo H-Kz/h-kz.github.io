@@ -1,0 +1,21 @@
+{
+  "name": "道の駅ナビ",
+  "short_name": "道の駅ナビ",
+  "description": "現在地から最も近い道の駅を自動で提案。あなたのドライブをもっと豊かに、もっと楽しく。",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "icon/icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon/icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

@@ -1,0 +1,230 @@
+:root {
+    --primary: #2563eb;
+    --white: #ffffff;
+    --landing-bg: #f8fafc;
+    --content-bg: rgba(255, 255, 255, 0.85);
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+}
+
+[data-theme="dark"] {
+    --white: #1e293b;
+    --landing-bg: #0f172a;
+    --content-bg: rgba(30, 41, 59, 0.85);
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+}
+
+.landing-body {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: var(--landing-bg);
+}
+
+#bg-map {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    filter: grayscale(100%) brightness(0.9) contrast(1.1);
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+[data-theme="dark"] #bg-map {
+    filter: grayscale(100%) invert(1) brightness(0.4) contrast(1.2);
+    opacity: 0.3;
+}
+
+.landing-content {
+    position: relative;
+    z-index: 10;
+    background: var(--content-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 32px;
+    padding: 40px;
+    max-width: 440px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+    animation: fade-up 1s ease-out;
+}
+
+[data-theme="dark"] .landing-content {
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+@keyframes fade-up {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.landing-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.logo-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.landing-logo span {
+    font-family: 'Outfit', sans-serif;
+    font-size: 32px;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--primary), #0f172a);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.02em;
+}
+
+[data-theme="dark"] .landing-logo span {
+    background: linear-gradient(135deg, #60a5fa, #f8fafc);
+    -webkit-background-clip: text;
+}
+
+.landing-tagline {
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 32px;
+    color: var(--text-muted);
+    line-height: 1.6;
+}
+
+.gradient-text {
+    font-family: 'Outfit', sans-serif;
+    font-size: 20px;
+    background: linear-gradient(135deg, var(--primary), #0f172a);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    display: inline-block;
+    margin: 8px 0;
+}
+
+[data-theme="dark"] .gradient-text {
+    background: linear-gradient(135deg, #60a5fa, #f8fafc);
+    -webkit-background-clip: text;
+}
+
+.landing-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.landing-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    border-radius: 20px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 16px;
+    transition: all 0.3s;
+}
+
+.btn-recommend {
+    background: var(--primary);
+    color: #ffffff;
+    box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3);
+}
+
+.btn-recommend.gps-disabled {
+    background: var(--white);
+    color: var(--text-main);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.btn-recommend.gps-disabled .gps-indicator {
+    background: #ef4444; /* 赤色で警告 */
+}
+
+.btn-recommend:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 20px 25px -5px rgba(37, 99, 235, 0.4);
+}
+
+.btn-list {
+    background: var(--white);
+    color: var(--text-main);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.btn-list:hover {
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.btn-install {
+    border: none;
+    cursor: pointer;
+    background: #22c55e;
+    color: white;
+    box-shadow: 0 10px 15px -3px rgba(34, 197, 94, 0.3);
+}
+
+.btn-install:hover {
+    background: #16a34a;
+}
+
+.btn-desc {
+    display: block;
+    font-size: 12px;
+    font-weight: 400;
+    opacity: 0.8;
+}
+
+.btn-text {
+    text-align: left;
+}
+
+.arrow-icon {
+    font-size: 20px;
+    opacity: 0.7;
+}
+
+.landing-disclaimer {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    font-size: 10px;
+    color: var(--text-muted);
+    text-align: left;
+    display: inline-block;
+}
+
+[data-theme="dark"] .landing-disclaimer {
+    border-top-color: rgba(255, 255, 255, 0.05);
+}
+
+.landing-disclaimer table {
+    border: none;
+}
+
+.landing-disclaimer th {
+    font-weight: normal;
+    padding-right: 12px;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.landing-disclaimer a {
+    color: inherit;
+}

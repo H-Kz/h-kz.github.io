@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>道の駅ナビ - あなたの旅のコンパス</title>
+    <meta name="description" content="現在地から最も近い道の駅を自動で提案。あなたのドライブをもっと豊かに、もっと楽しく。">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="landing.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Outfit:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="manifest" href="manifest.json">
+</head>
+
+<body class="landing-body">
+    <div id="bg-map"></div>
+
+    <div class="landing-content">
+        <div class="landing-logo">
+            <img src="icon/icon.png" alt="logo" class="logo-icon">
+            <span>道の駅ナビ</span>
+        </div>
+
+        <p class="landing-tagline">
+            道の駅は、単なる休憩所ではありません。<br>
+            その土地の物語に出会う場所。<br>
+            <br>
+            <strong class="gradient-text">「未知の駅、未知の旅へ。」</strong><br>
+            あなたのドライブを、もっと自由に、もっと豊かに。
+        </p>
+
+        <div class="landing-actions">
+            <a href="autorecomend/index.html" class="landing-btn btn-recommend">
+                <div class="btn-text">
+                    <div>現在地から探す</div>
+                    <div class="gps-status">
+                        <div id="gps-indicator" class="gps-indicator"></div>
+                        <span id="gps-text">GPSを確認中...</span>
+                    </div>
+                </div>
+                <span class="arrow-icon">→</span>
+            </a>
+
+            <a href="list/index.html" class="landing-btn btn-list">
+                <div class="btn-text">
+                    <div>一覧から探す</div>
+                    <span class="btn-desc">全ての道の駅をリストから確認</span>
+                </div>
+                <span class="arrow-icon">→</span>
+            </a>
+
+            <button id="pwa-install-btn" class="landing-btn btn-install hidden">
+                <div class="btn-text">
+                    <div>アプリをインストール</div>
+                    <span class="btn-desc">ホーム画面からすぐに起動</span>
+                </div>
+                <span class="arrow-icon">→</span>
+            </button>
+        </div>
+
+        <div class="landing-disclaimer">
+            <table>
+                <tr>
+                    <th> 作者 </th>
+                    <td> @h_kzsfc </td>
+                </tr>
+                <tr>
+                    <th> 道の駅データ </th>
+                    <td> 国土交通省 国土数値情報「道の駅」2019年 </td>
+                </tr>
+                <tr>
+                    <th> アイコン素材 </th>
+                    <td> <a href="https://icon-pit.com/pictogram/18252" target="_blank">icon-pit</a> </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <script type="module" src="app.js"></script>
+</body>
+
+</html>
