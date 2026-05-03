@@ -17,14 +17,15 @@
 
 .landing-body {
     margin: 0;
-    padding: 0;
-    height: 100vh;
-    width: 100vw;
+    padding: 20px;
+    min-height: 100vh;
+    width: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
-    overflow: hidden;
     background: var(--landing-bg);
+    box-sizing: border-box;
+    overflow-x: hidden;
 }
 
 #bg-map {
@@ -55,9 +56,21 @@
     padding: 40px;
     max-width: 440px;
     width: 90%;
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
     text-align: center;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
     animation: fade-up 1s ease-out;
+    /* スクロールバーを非表示にする */
+    -ms-overflow-style: none;
+    /* IE, Edge */
+    scrollbar-width: none;
+    /* Firefox */
+}
+
+.landing-content::-webkit-scrollbar {
+    display: none;
+    /* Chrome, Safari */
 }
 
 [data-theme="dark"] .landing-content {
@@ -160,7 +173,8 @@
     color: var(--text-main);
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
     border: 1px solid rgba(0, 0, 0, 0.05);
-    z-index: 1; /* 1番下 */
+    z-index: 1;
+    /* 1番下 */
 }
 
 .btn-recommend.gps-disabled .gps-indicator {
@@ -181,7 +195,8 @@
     background: var(--white);
     color: var(--text-main);
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    z-index: 2; /* 2番目 */
+    z-index: 2;
+    /* 2番目 */
     position: relative;
 }
 
@@ -197,7 +212,8 @@
     background: #22c55e;
     color: white;
     box-shadow: 0 10px 15px -3px rgba(34, 197, 94, 0.3);
-    z-index: 3; /* 3番目 */
+    z-index: 3;
+    /* 3番目 */
     position: relative;
 }
 
@@ -281,4 +297,35 @@ a {
 
 .landing-disclaimer a {
     color: inherit;
+}
+
+@media (max-height: 700px) {
+    .landing-content {
+        padding: 24px;
+    }
+    .landing-logo {
+        margin-bottom: 16px;
+    }
+    .landing-logo span {
+        font-size: 24px;
+    }
+    .logo-icon {
+        width: 40px;
+        height: 40px;
+    }
+    .landing-tagline {
+        margin-bottom: 16px;
+        font-size: 14px;
+    }
+    .gradient-text {
+        font-size: 18px;
+    }
+}
+
+@media (max-width: 480px) {
+    .landing-content {
+        padding: 24px 20px;
+        width: 100%;
+        border-radius: 24px;
+    }
 }
