@@ -1,11 +1,11 @@
 :root {
     --bg-dark: #0a0a0c;
     --glass-bg: rgba(20, 22, 28, 0.75);
-    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-border: rgba(255, 255, 255, 0.5);
     --accent: #00d2ff;
     --accent-glow: rgba(0, 210, 255, 0.4);
-    --text-primary: #f0f0f0;
-    --text-secondary: #a0a0a0;
+    --text-primary: #ffffff;
+    --text-secondary: #ffffff;
     --danger: #ff4d4d;
     --success: #00e676;
     --font-main: 'Outfit', sans-serif;
@@ -32,6 +32,7 @@ html {
     background-color: var(--bg-dark);
     font-family: var(--font-main);
     color: var(--text-primary);
+    font-size: 110%;
 }
 
 
@@ -108,8 +109,8 @@ html {
 
 .icon-search {
     color: var(--text-secondary);
-    width: 18px;
-    height: 18px;
+    width: 22px;
+    height: 22px;
     object-fit: contain;
 }
 
@@ -160,8 +161,8 @@ html {
 
 .control-btn-mini i,
 .control-btn-mini img {
-    width: 22px;
-    height: 22px;
+    width: 26px;
+    height: 26px;
     object-fit: contain;
 }
 
@@ -423,8 +424,8 @@ body.lhd #layer-menu {
 
 .voice-btn i,
 .voice-btn img {
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
     object-fit: contain;
 }
 
@@ -1256,8 +1257,8 @@ body.lhd #ctrl-panel {
 }
 
 .circle-btn i {
-    width: 24px;
-    height: 24px;
+    width: 29px;
+    height: 29px;
 }
 
 .view-opt:disabled {
@@ -1268,8 +1269,17 @@ body.lhd #ctrl-panel {
 }
 
 .circle-btn {
-    width: 60px;
-    height: 60px;
+    width: 72px;
+    height: 72px;
+}
+
+#btn-locate {
+    border: 2px solid var(--accent) !important;
+    color: var(--text-primary) !important;
+}
+
+#btn-locate:hover {
+    color: var(--text-primary) !important;
 }
 
 #center-container {
@@ -1734,7 +1744,7 @@ h2 {
     z-index: 3000;
     text-align: center;
     box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
-    border: 1px solid rgba(255, 77, 77, 0.4);
+    border: 1px solid var(--glass-border);
 }
 
 #location-error-popup h3 {

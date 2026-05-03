@@ -1294,6 +1294,7 @@ markerStyle.textContent = `
         background-image: url('icons/nav-arrow.svg');
         background-size: contain; background-repeat: no-repeat; background-position: center;
         box-shadow: 0 0 20px rgba(0, 150, 255, 0.6), 0 0 40px rgba(0, 210, 255, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.5);
         z-index: 5;
     }
     .user-marker-pulse {
