@@ -59,19 +59,12 @@ export const UI = {
         card.className = 'station-card';
         card.href = `${basePath}detail/index.html?stationid=${encodeURIComponent(props.P35_006)}`;
 
-        const headerDiv = document.createElement('div');
-        headerDiv.className = 'card-header';
-
         const nameH2 = document.createElement('h2');
         nameH2.className = 'station-name';
         nameH2.textContent = props.P35_006;
-        headerDiv.appendChild(nameH2);
 
-        const bodyDiv = document.createElement('div');
-        bodyDiv.className = 'card-body';
-
-        const metaDiv = document.createElement('div');
-        metaDiv.className = 'card-meta';
+        const stationInfoDiv = document.createElement('div');
+        stationInfoDiv.className = 'station-info';
 
         const metaTextGroup = document.createElement('div');
         metaTextGroup.className = 'meta-text-group';
@@ -88,26 +81,26 @@ export const UI = {
             distSpan.innerHTML = `${distLabel} <strong>${feature.distance.toFixed(1)}</strong> km`;
             metaTextGroup.appendChild(distSpan);
         }
-        metaDiv.appendChild(metaTextGroup);
+        stationInfoDiv.appendChild(metaTextGroup);
 
-        // Google Maps ボタンを地名＋距離のブロックに対して中央に追加
+        // Google Maps ボタンを右端に配置
         const gmapsActive = Utils.getAmenityStatus(props, etc2Data, 'google_maps');
         if (gmapsActive) {
             const gmapsLink = document.createElement('a');
-            gmapsLink.className = 'amenity-box active google_maps title-gmaps';
+            gmapsLink.className = 'amenity-box active google_maps google-maps-btn';
             gmapsLink.href = `https://www.google.com/maps/search/?api=1&query=${props.P35_001},${props.P35_002}`;
             gmapsLink.target = '_blank';
             gmapsLink.addEventListener('click', e => e.stopPropagation());
-            
+
             const gmapsImg = document.createElement('img');
             gmapsImg.src = `${basePath}icon/Google_Maps.png`;
             gmapsLink.appendChild(gmapsImg);
-            metaDiv.appendChild(gmapsLink);
+            stationInfoDiv.appendChild(gmapsLink);
         }
 
         const amenitiesDiv = document.createElement('div');
         amenitiesDiv.className = 'amenities';
-        
+
         const configs = [
             { key: 'P35_012', icon: 'toilet.png' },
             { key: 'P35_013', icon: 'restrant.png' },
@@ -136,18 +129,16 @@ export const UI = {
 
             box.className = `amenity-box ${isActive ? 'active' : 'inactive'}`;
             if (['etc2', 'web'].includes(config.key)) box.classList.add(config.key);
-            
+
             const img = document.createElement('img');
             img.src = `${basePath}icon/${config.icon}`;
             box.appendChild(img);
             amenitiesDiv.appendChild(box);
         });
 
-        bodyDiv.appendChild(metaDiv);
-        bodyDiv.appendChild(amenitiesDiv);
-
-        card.appendChild(headerDiv);
-        card.appendChild(bodyDiv);
+        card.appendChild(nameH2);
+        card.appendChild(stationInfoDiv);
+        card.appendChild(amenitiesDiv);
         return card;
     },
 
