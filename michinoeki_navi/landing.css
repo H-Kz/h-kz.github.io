@@ -51,7 +51,7 @@
     background: var(--content-bg);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    border: none;
     border-radius: 32px;
     padding: 40px;
     max-width: 440px;
@@ -303,20 +303,25 @@ a {
     .landing-content {
         padding: 24px;
     }
+
     .landing-logo {
         margin-bottom: 16px;
     }
+
     .landing-logo span {
         font-size: 24px;
     }
+
     .logo-icon {
         width: 40px;
         height: 40px;
     }
+
     .landing-tagline {
         margin-bottom: 16px;
         font-size: 14px;
     }
+
     .gradient-text {
         font-size: 18px;
     }

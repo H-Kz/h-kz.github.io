@@ -79,7 +79,7 @@ main {
     transition: all 0.2s ease;
     text-decoration: none;
     color: inherit;
-    border: 2px solid transparent;
+    border: none;
 }
 
 .station-card:hover {
@@ -287,7 +287,7 @@ main {
 .premium-card {
     background: var(--white);
     backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: none;
     border-radius: 24px;
     overflow: hidden;
     box-shadow: var(--card-shadow);
@@ -496,7 +496,7 @@ main {
 
 [data-theme="dark"] .google-maps-btn {
     background: #1e293b;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: none;
 }
 
 .distance-tag {
@@ -766,7 +766,7 @@ main {
     align-items: center;
     gap: 20px;
     transition: all 0.3s ease;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: none;
 }
 
 #location-popup.hidden {
@@ -778,7 +778,7 @@ main {
 [data-theme="dark"] #location-popup {
     background: #1e293b;
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: none;
 }
 
 .popup-spinner {
@@ -812,7 +812,8 @@ main {
         flex: 1.2;
         aspect-ratio: auto;
         height: auto;
-        min-height: 400px; /* 高さを明示的に確保 */
+        min-height: 400px;
+        /* 高さを明示的に確保 */
     }
 
     .card-content-wrapper {
@@ -887,7 +888,7 @@ main {
     pointer-events: auto;
     background: linear-gradient(135deg, var(--primary) 0%, #1d4ed8 100%);
     backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: none;
     display: flex;
     align-items: center;
     gap: 12px;
@@ -941,7 +942,7 @@ main {
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    border: none;
 }
 
 .share-main-btn:hover {
@@ -988,7 +989,7 @@ main {
 
 [data-theme="dark"] .share-menu {
     background: #1e293b;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: none;
 }
 
 .share-item {
@@ -1018,7 +1019,7 @@ main {
     align-items: center;
     justify-content: center;
     padding: 4px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     overflow: hidden;
     flex-shrink: 0;
 }
@@ -1078,8 +1079,15 @@ main {
 }
 
 @keyframes location-pulse {
-    0% { transform: translate(-50%, -50%) scale(0.2); opacity: 0.8; }
-    100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+    0% {
+        transform: translate(-50%, -50%) scale(0.2);
+        opacity: 0.8;
+    }
+
+    100% {
+        transform: translate(-50%, -50%) scale(1.5);
+        opacity: 0;
+    }
 }
 
 
@@ -1118,12 +1126,12 @@ main {
 .marker-pin-img {
     width: 25px;
     height: 41px;
-    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
     z-index: 1;
 }
 
 .marker-grey .marker-pin-img {
-    filter: grayscale(100%) opacity(0.8) drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+    filter: grayscale(100%) opacity(0.8) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
 .marker-label {
@@ -1140,14 +1148,14 @@ main {
     border-radius: 8px;
     white-space: nowrap;
     font-weight: 700;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     z-index: 2;
     pointer-events: none;
     max-width: 180px;
     overflow: hidden;
     text-overflow: ellipsis;
     border: 1.5px solid rgba(255, 255, 255, 0.2);
-    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 /* Map Tooltips (Deprecated in favor of unified marker) */
@@ -1174,7 +1182,7 @@ main {
     font-weight: 700;
     cursor: pointer;
     transition: all 0.3s;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .tab-btn.active {
@@ -1206,14 +1214,23 @@ main {
     background: var(--white);
     padding: 16px;
     border-radius: 16px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
     animation: slide-up 0.3s ease-out;
 }
 
 @keyframes slide-up {
-    from { transform: translateY(100%); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
 }
 
 /* Utilities */
-.hidden { display: none !important; }
+.hidden {
+    display: none !important;
+}
