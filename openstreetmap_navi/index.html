@@ -22,7 +22,7 @@
 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#00d2ff">
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Aura Drive">
     <link rel="stylesheet" href="style.css">
@@ -40,8 +40,7 @@
                 <img src="icons/GPS.png" alt="gnss">
             </div>
             <div id="pwa-prompt" class="glass hidden">
-                <div class="pwa-prompt-icon"><img src="icons/icon.png" width="60" height="60"
-                        style="border-radius: 10px;"></div>
+                <div class="pwa-prompt-icon"><img src="icons/icon.png"></div>
                 <div class="pwa-prompt-text">
                     <strong>Aura Drive</strong>
                     <span>ホーム画面に追加してください</span>
@@ -80,6 +79,17 @@
                         <div class="history-empty">現在地を取得中...</div>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Location Error Popup -->
+        <div id="location-error-popup" class="glass hidden">
+            <div class="popup-content">
+                <img src="icons/GPS.png"
+                    style="width:40px;height:40px;margin-bottom:15px; filter: invert(42%) sepia(93%) saturate(1352%) hue-rotate(338deg) brightness(103%) contrast(107%);">
+                <h3>位置情報が利用できません</h3>
+                <p>ナビゲーションを利用するには、ブラウザの設定で位置情報の利用を許可してください。</p>
+                <button id="btn-location-error-close">OK</button>
             </div>
         </div>
 
@@ -292,6 +302,30 @@
                         <button class="layer-opt overlay-toggle" id="toggle-cycling" data-overlay="cycling">
                             <img src="icons/bicecle.png" alt="cycling"> <span>自転車レーン</span>
                         </button>
+                    </div>
+                    <div class="h-divider"></div>
+                    <div class="layer-section">
+                        <p class="section-label">SNSでシェア</p>
+                        <div class="sns-share-group">
+                            <button class="sns-btn" id="share-x" title="Xでシェア">
+                                <img src="icons/X_logo-black.png" alt="X">
+                            </button>
+                            <button class="sns-btn" id="share-line" title="LINEで送る">
+                                <img src="icons/line.png" alt="LINE">
+                            </button>
+                            <button class="sns-btn" id="share-fb" title="Facebookでシェア">
+                                <img src="icons/Facebook_Logo_Primary.png" alt="Facebook">
+                            </button>
+                            <button class="sns-btn" id="share-ig" title="Instagram">
+                                <img src="icons/Instagram_Glyph_Gradient.png" alt="Instagram">
+                            </button>
+                            <!--<button class="sns-btn" id="share-note" title="noteでシェア">
+                                <img src="icons/note_copy.png" alt="note">
+                            </button>-->
+                            <button class="sns-btn" id="share-copy" title="URLをコピー">
+                                <img src="icons/copy.png" alt="Copy">
+                            </button>
+                        </div>
                     </div>
                     <div class="h-divider"></div>
                     <div class="layer-section">

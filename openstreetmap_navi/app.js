@@ -108,12 +108,48 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             restoreState();
+            processUrlParams();
         });
 
         // Stop following on manual drag
         state.map.on('dragstart', () => {
             if (state.isFollowing) { state.isFollowing = false; updateLocateBtn(); }
         });
+    };
+
+    // --- URL Parameters Handling ---
+    // Usage: ?lat=35.681&lon=139.767&name=TokyoStation or ?dest=TokyoStation
+    const processUrlParams = async () => {
+        const params = new URLSearchParams(window.location.search);
+        const lat = params.get('lat');
+        const lon = params.get('lon');
+        const destName = params.get('dest');
+        const name = params.get('name');
+
+        if (lat && lon) {
+            const item = {
+                lat: parseFloat(lat),
+                lon: parseFloat(lon),
+                name: name || `${lat}, ${lon}`,
+                display_name: name || `${lat}, ${lon}`
+            };
+            selectDestination(item);
+        } else if (destName) {
+            try {
+                const url = `${CONFIG.nominatimBase}?q=${encodeURIComponent(destName)}&format=json&limit=1&accept-language=ja&countrycodes=jp`;
+                const res = await fetch(url);
+                const data = await res.json();
+                if (data && data.length > 0) {
+                    const item = data[0];
+                    selectDestination({
+                        lat: parseFloat(item.lat),
+                        lon: parseFloat(item.lon),
+                        name: item.display_name.split(',')[0],
+                        display_name: item.display_name
+                    });
+                }
+            } catch (e) { console.error('URL geocode error:', e); }
+        }
     };
 
     // --- Route Layer ---
@@ -195,44 +231,78 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- Geolocation ---
+    const handlePositionSuccess = (pos) => {
+        const errorPopup = document.getElementById('location-error-popup');
+        if (errorPopup) errorPopup.classList.add('hidden');
+
+        updateGnssStatus(true);
+        const { longitude, latitude, speed, heading } = pos.coords;
+        const firstLock = !state.userLocation;
+        state.userLocation = [longitude, latitude];
+        state.currentSpeed = speed ? Math.round(speed * 3.6) : 0;
+        if (heading != null) state.lastHeading = heading;
+
+        updateUI();
+        updateUserMarker(heading);
+
+        if (state.isFollowing) {
+            const containerHeight = state.map.getContainer().offsetHeight;
+            const padTop = state.isNorthUp ? 0 : (containerHeight * 0.6);
+
+            state.map.easeTo({
+                center: state.userLocation,
+                bearing: state.isNorthUp ? 0 : (heading || 0),
+                zoom: state.map.getZoom() < 15 ? 17 : state.map.getZoom(),
+                pitch: state.isTilted ? 45 : 0,
+                padding: { top: padTop, bottom: 0, left: 0, right: 0 },
+                duration: 1000
+            });
+        }
+
+        if (firstLock && state.destItem && !state.route) {
+            selectDestination(state.destItem);
+        }
+
+        if (state.isNavigating) advanceNavStep();
+        updateNearbyPOIs();
+    };
+
+    const handlePositionError = (err) => {
+        console.error('Geolocation Error:', err);
+        updateGnssStatus(false);
+        // Only show popup on PERMISSION_DENIED and if we never got a location
+        if (err.code === 1 && !state.userLocation) {
+            const errorPopup = document.getElementById('location-error-popup');
+            if (errorPopup) errorPopup.classList.remove('hidden');
+        }
+    };
+
     const startTracking = () => {
         if (!('geolocation' in navigator)) return;
-        navigator.geolocation.watchPosition(pos => {
-            updateGnssStatus(true);
-            const { longitude, latitude, speed, heading } = pos.coords;
-            const firstLock = !state.userLocation;
-            state.userLocation = [longitude, latitude];
-            state.currentSpeed = speed ? Math.round(speed * 3.6) : 0;
-            if (heading != null) state.lastHeading = heading;
 
-            updateUI();
-            updateUserMarker(heading);
+        const options = {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 3000
+        };
 
-            if (state.isFollowing) {
-                const containerHeight = state.map.getContainer().offsetHeight;
-                const padTop = state.isNorthUp ? 0 : (containerHeight * 0.6);
-
-                state.map.easeTo({
-                    center: state.userLocation,
-                    bearing: state.isNorthUp ? 0 : (heading || 0),
-                    zoom: state.map.getZoom() < 15 ? 17 : state.map.getZoom(),
-                    pitch: state.isTilted ? 45 : 0,
-                    padding: { top: padTop, bottom: 0, left: 0, right: 0 },
-                    duration: 1000
-                });
-            }
-
-            if (firstLock && state.destItem && !state.route) {
-                selectDestination(state.destItem);
-            }
-
-            // Step tracking during navigation
-            if (state.isNavigating) advanceNavStep();
-            updateNearbyPOIs();
-        }, err => {
-            console.error('Geolocation Error:', err);
-            updateGnssStatus(false);
-        }, { enableHighAccuracy: true });
+        // Initial check on page load
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                handlePositionSuccess(pos);
+                // If initial fix succeeds, start continuous watching
+                navigator.geolocation.watchPosition(handlePositionSuccess, handlePositionError, options);
+            },
+            (err) => {
+                handlePositionError(err);
+                // Even if initial fix fails (not because of permission), start watching 
+                // in case it's a temporary signal issue.
+                if (err.code !== 1) {
+                    navigator.geolocation.watchPosition(handlePositionSuccess, handlePositionError, options);
+                }
+            },
+            options
+        );
     };
 
     const updateUserMarker = (heading) => {
@@ -363,6 +433,10 @@ document.addEventListener('DOMContentLoaded', () => {
         recognition.onerror = (event) => {
             console.error('Speech recognition error:', event.error);
             voiceBtn.classList.remove('recording');
+            if (event.error === 'not-allowed') {
+                voiceBtn.classList.add('mic-denied');
+                voiceBtn.title = 'マイクの利用権限がありません';
+            }
         };
 
         recognition.onend = () => {
@@ -1111,6 +1185,84 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // --- PWA Installation ---
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        // Show the custom prompt UI if not already in standalone mode
+        if (!window.matchMedia('(display-mode: standalone)').matches) {
+            document.getElementById('pwa-prompt').classList.remove('hidden');
+        }
+    });
+
+    document.getElementById('btn-pwa-install').addEventListener('click', async () => {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log(`User response to the install prompt: ${outcome}`);
+            deferredPrompt = null;
+            document.getElementById('pwa-prompt').classList.add('hidden');
+        }
+    });
+
+    document.getElementById('btn-pwa-dismiss').addEventListener('click', () => {
+        document.getElementById('pwa-prompt').classList.add('hidden');
+    });
+
+    document.getElementById('btn-location-error-close').addEventListener('click', () => {
+        document.getElementById('location-error-popup').classList.add('hidden');
+        startTracking();
+    });
+
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js').catch(err => console.warn('SW registration failed:', err));
+        });
+    }
+
+    // --- SNS Sharing ---
+    const setupSnsSharing = () => {
+        const shareTitle = "Aura Drive | 次世代Webカーナビ";
+        const shareUrl = window.location.origin + window.location.pathname;
+
+        const addShareListener = (id, callback) => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('click', callback);
+        };
+
+        addShareListener('share-x', () => {
+            window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareTitle)}&url=${encodeURIComponent(shareUrl)}`, '_blank');
+        });
+
+        addShareListener('share-line', () => {
+            window.open(`https://line.me/R/msg/text/?${encodeURIComponent(shareTitle + " " + shareUrl)}`, '_blank');
+        });
+
+        addShareListener('share-fb', () => {
+            window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, '_blank');
+        });
+
+        addShareListener('share-ig', () => {
+            alert('Instagramを開きます。リンクをプロフィールやストーリーズで共有してください。');
+            window.open('https://www.instagram.com/', '_blank');
+        });
+
+        addShareListener('share-note', () => {
+            window.open(`https://note.com/intent/post?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareTitle)}`, '_blank');
+        });
+
+        addShareListener('share-copy', () => {
+            navigator.clipboard.writeText(shareUrl).then(() => {
+                const btn = document.getElementById('share-copy');
+                const oldHtml = btn.innerHTML;
+                btn.innerHTML = '<span style="color:#00b8d4; font-size:10px; font-weight:bold;">OK</span>';
+                setTimeout(() => { btn.innerHTML = oldHtml; }, 2000);
+            });
+        });
+    };
+
+    setupSnsSharing();
     loadPoiData();
     initMap();
 });
