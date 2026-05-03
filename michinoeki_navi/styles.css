@@ -61,11 +61,13 @@ main {
 .list-container {
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: 16px;
+    width: 100%;
+    margin-bottom: 24px;
 }
 
-#nearby-list {
-    gap: 16px;
+#nearby-stations {
+    max-width: 500px;
 }
 
 .station-card {
@@ -518,10 +520,10 @@ main {
 }
 
 .pref-stations {
-    padding: 8px 16px 20px;
+    padding: 16px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 16px;
     border-top: 1px solid #f1f5f9;
 }
 
