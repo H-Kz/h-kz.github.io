@@ -75,6 +75,7 @@ main {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 8px;
     box-shadow: var(--card-shadow);
     transition: all 0.2s ease;
     text-decoration: none;
@@ -90,6 +91,14 @@ main {
 
 .station-info {
     flex: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+}
+
+.card-info-text {
+    flex: 1;
 }
 
 .station-name {
@@ -97,6 +106,28 @@ main {
     font-weight: 700;
     margin-bottom: 4px;
     color: var(--text-dark);
+}
+
+.title-gmaps {
+    flex-shrink: 0;
+    width: 44px !important;
+    height: 44px !important;
+    border-radius: 10px !important;
+    background: var(--white);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.title-gmaps img {
+    width: 28px !important;
+    height: 28px !important;
+    filter: none !important;
+}
+
+[data-theme="dark"] .title-gmaps {
+    background: #1e293b;
 }
 
 .municipality-name {
@@ -147,6 +178,51 @@ main {
 
 .amenity-box.active {
     background-color: var(--icon-bg-active);
+}
+
+/* Responsive adjustments for station cards */
+@media (max-width: 580px) {
+    .station-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+        padding: 16px;
+    }
+
+    .station-info {
+        width: 100%;
+    }
+
+    .amenities {
+        width: 100%;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .amenity-box {
+        width: 40px;
+        height: 40px;
+    }
+
+    .amenity-box img {
+        width: 24px;
+        height: 24px;
+    }
+
+    .title-gmaps {
+        width: 40px !important;
+        height: 40px !important;
+    }
+
+    .title-gmaps img {
+        width: 24px !important;
+        height: 24px !important;
+    }
+
+    .station-name {
+        font-size: 18px;
+    }
 }
 
 .amenity-box.inactive {
@@ -471,6 +547,20 @@ main {
     gap: 16px;
 }
 
+@media (max-width: 480px) {
+    .card-header-top {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 20px;
+    }
+
+    .header-right {
+        width: 100%;
+        justify-content: space-between;
+    }
+}
+
 .google-maps-btn {
     display: flex;
     align-items: center;
@@ -541,6 +631,14 @@ main {
     justify-content: space-between;
     gap: 12px;
     margin-bottom: 24px;
+}
+
+@media (max-width: 480px) {
+    .amenity-grid {
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        gap: 12px;
+    }
 }
 
 .amenity-item {

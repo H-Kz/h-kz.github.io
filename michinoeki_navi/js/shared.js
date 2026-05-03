@@ -62,23 +62,42 @@ export const UI = {
         const infoDiv = document.createElement('div');
         infoDiv.className = 'station-info';
         
+        const infoTextDiv = document.createElement('div');
+        infoTextDiv.className = 'card-info-text';
+
         const nameH2 = document.createElement('h2');
         nameH2.className = 'station-name';
         nameH2.textContent = props.P35_006;
-        
+        infoTextDiv.appendChild(nameH2);
+
         const munP = document.createElement('p');
         munP.className = 'municipality-name';
         munP.textContent = `${props.P35_003} ${props.P35_004}`;
-        
-        infoDiv.appendChild(nameH2);
-        infoDiv.appendChild(munP);
+        infoTextDiv.appendChild(munP);
 
         if (feature.distance !== undefined && feature.distance !== null) {
             const distSpan = document.createElement('span');
             distSpan.className = 'list-distance';
             const distLabel = basePath.includes('detail') ? 'この駅から' : '現在地から';
             distSpan.innerHTML = `${distLabel} <strong>${feature.distance.toFixed(1)}</strong> km`;
-            infoDiv.appendChild(distSpan);
+            infoTextDiv.appendChild(distSpan);
+        }
+
+        infoDiv.appendChild(infoTextDiv);
+
+        // Google Maps ボタンを情報の右側に追加
+        const gmapsActive = Utils.getAmenityStatus(props, etc2Data, 'google_maps');
+        if (gmapsActive) {
+            const gmapsLink = document.createElement('a');
+            gmapsLink.className = 'amenity-box active google_maps title-gmaps';
+            gmapsLink.href = `https://www.google.com/maps/search/?api=1&query=${props.P35_001},${props.P35_002}`;
+            gmapsLink.target = '_blank';
+            gmapsLink.addEventListener('click', e => e.stopPropagation());
+            
+            const gmapsImg = document.createElement('img');
+            gmapsImg.src = `${basePath}icon/Google_Maps.png`;
+            gmapsLink.appendChild(gmapsImg);
+            infoDiv.appendChild(gmapsLink);
         }
 
         const amenitiesDiv = document.createElement('div');
@@ -90,24 +109,14 @@ export const UI = {
             { key: 'P35_014', icon: 'shop.png' },
             { key: 'P35_026', icon: 'ev_charger.png' },
             { key: 'etc2', icon: 'etc2.png' },
-            { key: 'web', icon: 'web.png' },
-            { key: 'google_maps', icon: 'Google_Maps.png' }
+            { key: 'web', icon: 'web.png' }
         ];
 
         configs.forEach(config => {
             let box;
             const isActive = Utils.getAmenityStatus(props, etc2Data, config.key);
 
-            if (config.key === 'google_maps') {
-                if (isActive) {
-                    box = document.createElement('a');
-                    box.href = `https://www.google.com/maps/search/?api=1&query=${props.P35_001},${props.P35_002}`;
-                    box.target = '_blank';
-                } else {
-                    box = document.createElement('div');
-                }
-                box.addEventListener('click', e => e.stopPropagation());
-            } else if (config.key === 'web') {
+            if (config.key === 'web') {
                 if (isActive) {
                     box = document.createElement('a');
                     box.href = props.P35_009 || props.P35_007 || '#';
@@ -121,7 +130,7 @@ export const UI = {
             }
 
             box.className = `amenity-box ${isActive ? 'active' : 'inactive'}`;
-            if (['etc2', 'google_maps', 'web'].includes(config.key)) box.classList.add(config.key);
+            if (['etc2', 'web'].includes(config.key)) box.classList.add(config.key);
             
             const img = document.createElement('img');
             img.src = `${basePath}icon/${config.icon}`;
