@@ -1,11 +1,11 @@
 const CACHE_NAME = 'aura-drive-v1';
 const CACHE_ASSETS = [
-    '/',
-    '/index.html',
-    '/app.js',
-    '/style.css',
-    '/manifest.json',
-    '/icons/nav-arrow.svg',
+    './',
+    './index.html',
+    './app.js',
+    './style.css',
+    './manifest.json',
+    './icons/nav-arrow.svg',
     'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap',
     'https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js',
     'https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css',

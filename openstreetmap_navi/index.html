@@ -390,44 +390,6 @@
     </div>
     </div>
     <script src="app.js"></script>
-    <script>
-        // Service Worker Registration
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js').catch(console.warn);
-        }
-
-        // PWA Install Prompt
-        let deferredInstallPrompt = null;
-        const pwaPrompt = document.getElementById('pwa-prompt');
-        const btnInstall = document.getElementById('btn-pwa-install');
-        const btnDismiss = document.getElementById('btn-pwa-dismiss');
-
-        const isStandalone = () =>
-            window.matchMedia('(display-mode: standalone)').matches ||
-            window.navigator.standalone ||
-            document.referrer.includes('android-app://');
-
-        window.addEventListener('beforeinstallprompt', e => {
-            e.preventDefault();
-            deferredInstallPrompt = e;
-            if (!isStandalone() && !sessionStorage.getItem('pwa_dismissed')) {
-                pwaPrompt.classList.remove('hidden');
-            }
-        });
-
-        btnInstall && btnInstall.addEventListener('click', async () => {
-            if (!deferredInstallPrompt) return;
-            deferredInstallPrompt.prompt();
-            const { outcome } = await deferredInstallPrompt.userChoice;
-            deferredInstallPrompt = null;
-            pwaPrompt.classList.add('hidden');
-        });
-
-        btnDismiss && btnDismiss.addEventListener('click', () => {
-            pwaPrompt.classList.add('hidden');
-            sessionStorage.setItem('pwa_dismissed', '1');
-        });
-    </script>
 </body>
 
 </html>
