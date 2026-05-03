@@ -33,6 +33,7 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
+    if (!event.request.url.startsWith('http')) return;
     const url = new URL(event.request.url);
 
     // Don't cache map tiles or API calls — always fetch fresh
@@ -55,10 +56,15 @@ self.addEventListener('fetch', event => {
     // Cache-first for app shell
     event.respondWith(
         caches.match(event.request).then(cached => {
-            return cached || fetch(event.request).then(response => {
-                if (response.ok) {
-                    caches.open(CACHE_NAME).then(cache => cache.put(event.request, response.clone()));
+            if (cached) return cached;
+            return fetch(event.request).then(response => {
+                if (!response || response.status !== 200 || response.type !== 'basic') {
+                    return response;
                 }
+                const responseToCache = response.clone();
+                caches.open(CACHE_NAME).then(cache => {
+                    cache.put(event.request, responseToCache);
+                });
                 return response;
             });
         })

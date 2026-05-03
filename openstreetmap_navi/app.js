@@ -54,8 +54,13 @@ document.addEventListener('DOMContentLoaded', () => {
         userLocation: null,
         destItem: null,
         isNavigatingStartPending: false,
+        wasNavigatingBeforeSearch: false,
+        previousDestItem: null,
         lastHeading: 0,
         currentSpeed: 0,
+        poiData: null,
+        icData: null,
+        stationData: null,
         map: null,
         userMarker: null,
         destMarker: null,
@@ -118,12 +123,12 @@ document.addEventListener('DOMContentLoaded', () => {
         state.map.addLayer({
             id: 'route-casing', type: 'line', source: 'route',
             layout: { 'line-join': 'round', 'line-cap': 'round' },
-            paint: { 'line-color': '#00d2ff', 'line-width': 12, 'line-opacity': 0.3, 'line-blur': 4 }
+            paint: { 'line-color': '#00d2ff', 'line-width': 20, 'line-opacity': 0.4, 'line-blur': 6 }
         });
         state.map.addLayer({
             id: 'route-line', type: 'line', source: 'route',
             layout: { 'line-join': 'round', 'line-cap': 'round' },
-            paint: { 'line-color': '#00d2ff', 'line-width': 6, 'line-opacity': 0.8 }
+            paint: { 'line-color': '#00d2ff', 'line-width': 10, 'line-opacity': 0.8 }
         });
     };
 
@@ -182,10 +187,18 @@ document.addEventListener('DOMContentLoaded', () => {
         state.activeOverlays.delete(key);
     };
 
+    const updateGnssStatus = (active) => {
+        const el = document.getElementById('gnss-status');
+        if (!el) return;
+        el.classList.toggle('gnss-active', active);
+        el.classList.toggle('gnss-searching', !active);
+    };
+
     // --- Geolocation ---
     const startTracking = () => {
         if (!('geolocation' in navigator)) return;
         navigator.geolocation.watchPosition(pos => {
+            updateGnssStatus(true);
             const { longitude, latitude, speed, heading } = pos.coords;
             const firstLock = !state.userLocation;
             state.userLocation = [longitude, latitude];
@@ -196,11 +209,15 @@ document.addEventListener('DOMContentLoaded', () => {
             updateUserMarker(heading);
 
             if (state.isFollowing) {
+                const containerHeight = state.map.getContainer().offsetHeight;
+                const padTop = state.isNorthUp ? 0 : (containerHeight * 0.6);
+
                 state.map.easeTo({
                     center: state.userLocation,
                     bearing: state.isNorthUp ? 0 : (heading || 0),
                     zoom: state.map.getZoom() < 15 ? 17 : state.map.getZoom(),
                     pitch: state.isTilted ? 45 : 0,
+                    padding: { top: padTop, bottom: 0, left: 0, right: 0 },
                     duration: 1000
                 });
             }
@@ -211,7 +228,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Step tracking during navigation
             if (state.isNavigating) advanceNavStep();
-        }, err => console.error('Geolocation Error:', err), { enableHighAccuracy: true });
+            updateNearbyPOIs();
+        }, err => {
+            console.error('Geolocation Error:', err);
+            updateGnssStatus(false);
+        }, { enableHighAccuracy: true });
     };
 
     const updateUserMarker = (heading) => {
@@ -241,12 +262,27 @@ document.addEventListener('DOMContentLoaded', () => {
             items.forEach(item => {
                 const div = document.createElement('div');
                 div.className = 'search-item';
-                const parts = item.display_name.split(',');
+                const parts = item.display_name.split(',').map(s => s.trim());
+
+                // Remove country
+                const addrParts = parts.slice(1).filter(p => p !== '日本');
+                const addr = addrParts.join(', ');
+
+                // Distance
+                let distStr = '';
+                if (state.userLocation) {
+                    const d = haversine(state.userLocation, [parseFloat(item.lon), parseFloat(item.lat)]);
+                    distStr = d < 1000 ? `${Math.round(d)}m` : `${(d / 1000).toFixed(1)}km`;
+                }
+
                 div.innerHTML = `
-                    <i data-lucide="map-pin" class="result-icon"></i>
+                    <img src="icons/pin.png" class="result-icon" alt="pin">
                     <div class="result-text">
-                        <span class="result-name">${parts[0]}</span>
-                        <span class="result-addr">${parts.slice(1, 3).join(',').trim()}</span>
+                        <div class="result-row1">
+                            <span class="result-name">${parts[0]}</span>
+                            <span class="result-dist">${distStr}</span>
+                        </div>
+                        <span class="result-addr">${addr}</span>
                     </div>`;
                 div.addEventListener('click', () => selectDestination(item));
                 searchResults.appendChild(div);
@@ -254,6 +290,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         lucide.createIcons();
         searchResults.classList.remove('hidden');
+        document.getElementById('search-overlay').classList.remove('hidden');
+        // hideHistoryCard();
     };
 
     searchInput.addEventListener('input', () => {
@@ -271,27 +309,97 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     searchInput.addEventListener('keydown', e => {
-        if (e.key === 'Escape') { searchResults.classList.add('hidden'); searchInput.blur(); }
+        if (e.key === 'Escape') {
+            document.getElementById('search-overlay').classList.add('hidden');
+            searchInput.blur();
+        }
+    });
+
+    searchInput.addEventListener('focus', () => {
+        showHistoryCard();
+    });
+
+    searchInput.addEventListener('blur', () => {
+        // Delay to allow clicks on history items
+        setTimeout(() => {
+            document.getElementById('search-overlay').classList.add('hidden');
+            // hideHistoryCard();
+        }, 200);
     });
 
     clearBtn.addEventListener('click', () => {
         searchInput.value = '';
         clearBtn.classList.add('hidden');
         searchResults.classList.add('hidden');
+        showHistoryCard();
         searchInput.focus();
     });
 
+    // --- Voice Search ---
+    const voiceBtn = document.getElementById('btn-voice-search');
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (SpeechRecognition) {
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'ja-JP';
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+
+        const soundStart = new Audio('sound/recognition_start.mp3');
+        const soundEnd = new Audio('sound/recongition_end.mp3');
+
+        recognition.onstart = () => {
+            voiceBtn.classList.add('recording');
+            soundStart.play().catch(e => console.warn('Audio play failed:', e));
+        };
+
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            searchInput.value = transcript;
+            // Trigger input event to show clear button and fetch results
+            searchInput.dispatchEvent(new Event('input'));
+        };
+
+        recognition.onerror = (event) => {
+            console.error('Speech recognition error:', event.error);
+            voiceBtn.classList.remove('recording');
+        };
+
+        recognition.onend = () => {
+            voiceBtn.classList.remove('recording');
+            soundEnd.play().catch(e => console.warn('Audio play failed:', e));
+        };
+
+        voiceBtn.addEventListener('click', () => {
+            if (voiceBtn.classList.contains('recording')) {
+                recognition.stop();
+            } else {
+                recognition.start();
+            }
+        });
+    } else {
+        // Hide button if not supported
+        voiceBtn.style.display = 'none';
+    }
+
     document.addEventListener('click', e => {
-        if (!e.target.closest('#search-results') && !e.target.closest('.top-bar')) {
+        if (!e.target.closest('#search-results') && !e.target.closest('.search-bar')) {
             searchResults.classList.add('hidden');
         }
     });
 
     // --- Destination & Routing ---
     const selectDestination = async (item) => {
+        if (state.isNavigating && !state.wasNavigatingBeforeSearch) {
+            state.wasNavigatingBeforeSearch = true;
+            state.previousDestItem = state.destItem;
+            document.getElementById('nav-info-popup').classList.add('hidden');
+        }
+
         state.destItem = item;
         saveState();
         searchResults.classList.add('hidden');
+        document.getElementById('search-overlay').classList.add('hidden');
         searchInput.value = item.display_name.split(',')[0];
         clearBtn.classList.remove('hidden');
 
@@ -309,8 +417,8 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('route-dest-name').textContent = item.display_name.split(',')[0];
         document.getElementById('nav-info-dest-name').textContent = item.display_name.split(',')[0];
         document.getElementById('route-summary').textContent = 'ルートを計算中...';
-        document.getElementById('route-banner').classList.remove('hidden');
-        hideHistoryCard();
+        document.getElementById('nav-card-pause').classList.remove('hidden');
+        showHistoryCard();
 
         addToSearchHistory(item);
 
@@ -344,7 +452,7 @@ document.addEventListener('DOMContentLoaded', () => {
             state.totalRemaining = route.distance;
             state.etaTime = eta;
 
-            document.getElementById('route-summary').textContent = `${distKm} km · 約 ${durMin} 分`;
+            document.getElementById('route-summary').textContent = `${distKm} km · ${etaStr} 着`;
 
             state.route = { type: 'Feature', geometry: route.geometry };
             if (!state.map.getSource('route')) setupRouteLayer();
@@ -397,6 +505,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const startNavigation = () => {
         if (!state.routeSteps.length) return;
         state.isNavigating = true;
+        state.wasNavigatingBeforeSearch = false;
+        state.previousDestItem = null;
         state.isFollowing = true;
         state.isNorthUp = false;
         state.isTilted = true;
@@ -404,8 +514,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('view-north-up').classList.remove('active');
         document.getElementById('view-tilt').classList.add('active');
         document.getElementById('view-flat').classList.remove('active');
-        document.getElementById('btn-3d').classList.add('active');
-        document.getElementById('route-banner').classList.add('hidden');
+        document.getElementById('nav-card-pause').classList.add('hidden');
         document.getElementById('nav-info-popup').classList.remove('hidden');
         hideHistoryCard();
         updateLocateBtn();
@@ -418,7 +527,10 @@ document.addEventListener('DOMContentLoaded', () => {
         state.isNavigating = false;
         saveState();
         document.getElementById('nav-info-popup').classList.add('hidden');
-        if (state.route) document.getElementById('route-banner').classList.remove('hidden');
+        if (state.route) {
+            document.getElementById('nav-card-pause').classList.remove('hidden');
+            showHistoryCard();
+        }
         speak('案内を終了します');
     };
 
@@ -494,6 +606,22 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const cancelRoute = () => {
+        if (state.wasNavigatingBeforeSearch && state.previousDestItem) {
+            const prev = state.previousDestItem;
+            state.wasNavigatingBeforeSearch = false;
+            state.previousDestItem = null;
+
+            // Clean up preview marker/route
+            if (state.destMarker) { state.destMarker.remove(); state.destMarker = null; }
+            document.getElementById('nav-card-pause').classList.add('hidden');
+            document.getElementById('btn-start-nav').classList.add('hidden');
+
+            // Restore previous
+            selectDestination(prev);
+            document.getElementById('nav-info-popup').classList.remove('hidden');
+            return;
+        }
+
         if (state.isNavigating) stopNavigation();
         if (state.destMarker) { state.destMarker.remove(); state.destMarker = null; }
         if (state.map.getSource('route')) {
@@ -503,10 +631,12 @@ document.addEventListener('DOMContentLoaded', () => {
         state.routeSteps = [];
         state.currentStepIdx = 0;
         state.destItem = null;
+        state.wasNavigatingBeforeSearch = false;
+        state.previousDestItem = null;
         saveState();
         searchInput.value = '';
         clearBtn.classList.add('hidden');
-        document.getElementById('route-banner').classList.add('hidden');
+        document.getElementById('nav-card-pause').classList.add('hidden');
         document.getElementById('btn-start-nav').classList.add('hidden');
         document.getElementById('nav-info-popup').classList.add('hidden');
         document.getElementById('nav-info-dest-name').textContent = '---';
@@ -527,11 +657,22 @@ document.addEventListener('DOMContentLoaded', () => {
         catch (e) { return []; }
     };
     const addToSearchHistory = (item) => {
-        const history = getSearchHistory();
-        const name = item.display_name.split(',')[0];
-        const filtered = history.filter(h => h.display_name !== item.display_name);
-        filtered.unshift({ display_name: item.display_name, lat: item.lat, lon: item.lon });
-        localStorage.setItem(HISTORY_KEY, JSON.stringify(filtered.slice(0, 8)));
+        let history = getSearchHistory();
+        // Remove existing duplicate (by display_name or exact coordinates)
+        history = history.filter(h =>
+            h.display_name !== item.display_name &&
+            !(Math.abs(h.lat - item.lat) < 0.00001 && Math.abs(h.lon - item.lon) < 0.00001)
+        );
+
+        // Add new entry to the front
+        history.unshift({
+            display_name: item.display_name,
+            lat: parseFloat(item.lat),
+            lon: parseFloat(item.lon)
+        });
+
+        // Limit to 5 items and save
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, 5)));
         renderHistoryCard();
     };
     const clearSearchHistory = () => {
@@ -540,19 +681,26 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     const renderHistoryCard = () => {
         const list = document.getElementById('history-list');
-        const history = getSearchHistory();
+        let history = getSearchHistory();
+
+        // Strictly enforce 5 items limit
+        if (history.length > 5) {
+            history = history.slice(0, 5);
+            localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+        }
+
         if (!history.length) {
             list.innerHTML = '<div class="history-empty">履歴なし</div>';
             return;
         }
         list.innerHTML = history.map((item, i) => `
-            <div class="history-item" data-idx="${i}">
-                <i data-lucide="clock"></i>
-                <span class="history-item-name">${item.display_name.split(',')[0]}</span>
+            <div class="tour-item" data-idx="${i}">
+                <img src="icons/history.png" alt="history">
+                <span class="tour-item-name">${item.display_name.split(',')[0]}</span>
             </div>
         `).join('');
         lucide.createIcons({ nodes: [list] });
-        list.querySelectorAll('.history-item').forEach(el => {
+        list.querySelectorAll('.tour-item').forEach(el => {
             el.addEventListener('click', () => {
                 const idx = parseInt(el.dataset.idx);
                 selectDestination(history[idx]);
@@ -560,6 +708,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
     const showHistoryCard = () => {
+        // Enforce mutual exclusivity with navigation cards
+        const isNavVisible = !document.getElementById('nav-info-popup').classList.contains('hidden');
+        const isPauseVisible = !document.getElementById('nav-card-pause').classList.contains('hidden');
+
+        if (isNavVisible || isPauseVisible) {
+            hideHistoryCard();
+            return;
+        }
+
         renderHistoryCard();
         document.getElementById('search-history-card').classList.remove('hidden');
     };
@@ -567,13 +724,16 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('search-history-card').classList.add('hidden');
     };
 
+    // Initialize UI
+    showHistoryCard();
+
     document.getElementById('btn-clear-history').addEventListener('click', clearSearchHistory);
 
     const saveState = () => {
         try {
             const routeData = state.route ? {
-                geometry: state.route.geometry,
-                properties: state.route.properties
+                route: state.route,
+                steps: state.routeSteps
             } : null;
             localStorage.setItem(STORAGE_KEY, JSON.stringify({
                 currentStyle: state.currentStyle,
@@ -630,7 +790,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 state.is3D = true;
                 document.getElementById('view-flat').classList.remove('active');
                 document.getElementById('view-tilt').classList.add('active');
-                document.getElementById('btn-3d').classList.add('active');
             }
             if (saved.isLhd === true) {
                 state.isLhd = true;
@@ -641,20 +800,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (saved.destItem) {
                 state.destItem = saved.destItem;
-                // Restore route geometry if available
+                // Restore route geometry and steps if available
                 if (saved.routeData && state.map.getSource('route')) {
-                    state.route = saved.routeData;
+                    state.route = saved.routeData.route;
+                    state.routeSteps = saved.routeData.steps || [];
                     redrawRoute();
                 }
             }
-            if (saved.isNavigating) {
+            if (saved.isNavigating && state.route) {
+                state.isNavigating = true;
+                document.getElementById('nav-info-popup').classList.remove('hidden');
+                document.getElementById('nav-card-pause').classList.add('hidden');
+                document.getElementById('nav-info-dest-name').textContent = state.destItem.display_name.split(',')[0];
+                // hideHistoryCard();
+                updateNavPanel();
+            } else if (saved.isNavigating) {
                 state.isNavigatingStartPending = true;
             }
 
             // Show history card if not navigating
-            if (!saved.isNavigating) {
-                showHistoryCard();
-            }
+            // Restore history card ONLY if not navigating or showing preview
+            showHistoryCard();
+            updateViewButtons();
         } catch (e) { console.warn('State restore failed:', e); showHistoryCard(); }
     };
 
@@ -670,54 +837,100 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- View Controls ---
+    const updateViewButtons = () => {
+        const northUp = document.getElementById('view-north-up');
+        const headingUp = document.getElementById('view-heading-up');
+        const flat = document.getElementById('view-flat');
+        const tilt = document.getElementById('view-tilt');
+        const cycleBtn = document.getElementById('btn-map-cycle');
+
+        // Menu buttons
+        northUp.classList.toggle('active', state.isNorthUp);
+        headingUp.classList.toggle('active', !state.isNorthUp);
+        flat.classList.toggle('active', !state.isTilted);
+        tilt.classList.toggle('active', state.isTilted);
+        tilt.disabled = state.isNorthUp;
+
+        // Update cycle button icon
+        const icons = {
+            nUp: `<img src="icons/north-up.png" alt="north">`,
+            hUp: `<img src="icons/car-icon.png" alt="heading">`,
+            tilt: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M4 18L8 6h8l4 12H4z" /><path d="M6.5 14h11M8.5 10h7M12 6v12M10 6l-3 12M14 6l3 12" stroke-width="0.8" opacity="0.3" /></svg>`
+        };
+
+        if (state.isNorthUp) {
+            cycleBtn.innerHTML = icons.nUp;
+        } else {
+            cycleBtn.innerHTML = state.isTilted ? icons.tilt : icons.hUp;
+        }
+    };
+
     // Bearing toggle (North-up / Heading-up)
     document.getElementById('view-north-up').addEventListener('click', () => {
         if (state.isNorthUp) return;
         state.isNorthUp = true;
-        document.getElementById('view-north-up').classList.add('active');
-        document.getElementById('view-heading-up').classList.remove('active');
         state.isTilted = false; state.is3D = false;
-        document.getElementById('view-flat').classList.add('active');
-        document.getElementById('view-tilt').classList.remove('active');
-        document.getElementById('btn-3d').classList.remove('active');
-        state.map.easeTo({ bearing: 0, pitch: 0, duration: 600 });
+        state.map.easeTo({ bearing: 0, pitch: 0, padding: { top: 0, bottom: 0, left: 0, right: 0 }, duration: 600 });
+        updateViewButtons();
         saveState();
     });
 
     document.getElementById('view-heading-up').addEventListener('click', () => {
         if (!state.isNorthUp) return;
         state.isNorthUp = false;
-        document.getElementById('view-heading-up').classList.add('active');
-        document.getElementById('view-north-up').classList.remove('active');
-        state.map.easeTo({ bearing: state.lastHeading, duration: 600 });
+        const containerHeight = state.map.getContainer().offsetHeight;
+        const padTop = state.isTilted ? (containerHeight * 0.8) : (containerHeight * 0.6);
+        state.map.easeTo({
+            bearing: state.lastHeading,
+            padding: { top: padTop, bottom: 0, left: 0, right: 0 },
+            duration: 600
+        });
+        updateViewButtons();
         saveState();
     });
 
     document.getElementById('view-flat').addEventListener('click', () => {
         if (!state.isTilted) return;
         state.isTilted = false; state.is3D = false;
-        document.getElementById('view-flat').classList.add('active');
-        document.getElementById('view-tilt').classList.remove('active');
-        document.getElementById('btn-3d').classList.remove('active');
-        state.map.easeTo({ pitch: 0, duration: 600 });
+        const containerHeight = state.map.getContainer().offsetHeight;
+        const padTop = state.isNorthUp ? 0 : (containerHeight * 0.8);
+
+        state.map.easeTo({
+            pitch: 0,
+            padding: { top: padTop, bottom: 0, left: 0, right: 0 },
+            duration: 600
+        });
+        updateViewButtons();
         saveState();
     });
 
     document.getElementById('view-tilt').addEventListener('click', () => {
-        if (state.isTilted) return;
+        if (state.isTilted || state.isNorthUp) return;
         state.isTilted = true; state.is3D = true;
-
-        if (state.isNorthUp) {
-            state.isNorthUp = false;
-            document.getElementById('view-heading-up').classList.add('active');
-            document.getElementById('view-north-up').classList.remove('active');
-        }
-
-        document.getElementById('view-tilt').classList.add('active');
-        document.getElementById('view-flat').classList.remove('active');
-        document.getElementById('btn-3d').classList.add('active');
-        state.map.easeTo({ pitch: 45, bearing: state.lastHeading, duration: 600 });
+        const containerHeight = state.map.getContainer().offsetHeight;
+        const padTop = containerHeight * 0.8;
+        state.map.easeTo({
+            pitch: 45,
+            bearing: state.lastHeading,
+            padding: { top: padTop, bottom: 0, left: 0, right: 0 },
+            duration: 600
+        });
+        updateViewButtons();
         saveState();
+    });
+
+    // Map Mode Cycle Button
+    document.getElementById('btn-map-cycle').addEventListener('click', () => {
+        if (state.isNorthUp) {
+            // North-up (Flat) -> Heading-up (Flat)
+            document.getElementById('view-heading-up').click();
+        } else if (!state.isTilted) {
+            // Heading-up (Flat) -> Heading-up (Tilt)
+            document.getElementById('view-tilt').click();
+        } else {
+            // Heading-up (Tilt) -> North-up (Flat)
+            document.getElementById('view-north-up').click();
+        }
     });
 
     // LHD/RHD toggle
@@ -748,24 +961,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    document.getElementById('btn-3d').addEventListener('click', () => {
-        state.is3D = !state.is3D;
-        state.isTilted = state.is3D;
-        document.getElementById('btn-3d').classList.toggle('active', state.is3D);
-        document.getElementById('view-flat').classList.toggle('active', !state.is3D);
-        document.getElementById('view-tilt').classList.toggle('active', state.is3D);
-
-        let targetBearing = state.map.getBearing();
-        if (state.is3D && state.isNorthUp) {
-            state.isNorthUp = false;
-            document.getElementById('view-heading-up').classList.add('active');
-            document.getElementById('view-north-up').classList.remove('active');
-            targetBearing = state.lastHeading;
-        }
-
-        state.map.easeTo({ pitch: state.is3D ? 45 : 0, bearing: targetBearing, duration: 1000 });
-        saveState();
-    });
 
     document.getElementById('btn-zoom-in').addEventListener('click', () => state.map.zoomIn());
     document.getElementById('btn-zoom-out').addEventListener('click', () => state.map.zoomOut());
@@ -813,6 +1008,110 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // --- Nearby POI ---
+    const loadPoiData = async () => {
+        try {
+            const [poiRes, icRes, stationRes] = await Promise.all([
+                fetch('michinoeki.geojson'),
+                fetch('N06-20_Joint.geojson'),
+                fetch('N02-20_Station.geojson')
+            ]);
+            state.poiData = await poiRes.json();
+            state.icData = await icRes.json();
+            state.stationData = await stationRes.json();
+        } catch (e) { console.warn('POI load failed:', e); }
+    };
+
+    const updateNearbyPOIs = () => {
+        if (!state.userLocation || state.isNavigating) {
+            document.querySelectorAll('.poi-card').forEach(c => c.classList.add('hidden'));
+            return;
+        }
+
+        // Update Roadside Stations
+        updatePOIList('tour', state.poiData, 'P35_006', 'icons/tour.png');
+        // Update Highway ICs
+        updatePOIList('ic', state.icData, 'N06_018', 'icons/highway.png');
+        // Update Stations
+        updatePOIList('station', state.stationData, 'N02_005', 'icons/train.png');
+    };
+
+    const updatePOIList = (type, data, nameKey, icon) => {
+        const card = document.getElementById(`nearby-${type}-card`);
+        const list = document.getElementById(`nearby-${type}-list`);
+        if (!data || !data.features) {
+            card.classList.add('hidden');
+            return;
+        }
+
+        const pois = data.features.map(f => {
+            let coords;
+            if (f.geometry.type === 'Point') {
+                coords = f.geometry.coordinates;
+            } else if (f.geometry.type === 'MultiLineString') {
+                // Approximate station location with first point of the first line
+                coords = f.geometry.coordinates[0][0];
+            } else if (f.geometry.type === 'LineString') {
+                coords = f.geometry.coordinates[0];
+            }
+
+            if (!coords) return null;
+
+            const dist = getDistance(state.userLocation, coords);
+            return {
+                name: f.properties[nameKey],
+                dist: dist,
+                lat: coords[1],
+                lon: coords[0],
+                display_name: f.properties[nameKey]
+            };
+        }).filter(p => p !== null).sort((a, b) => a.dist - b.dist).slice(0, 3);
+
+        list.innerHTML = '';
+        pois.forEach(p => {
+            const div = document.createElement('div');
+            div.className = 'tour-item';
+            div.innerHTML = `
+                <img src="${icon}" style="width:16px;height:16px; margin-right:10px;">
+                <div class="tour-item-info">
+                    <div class="tour-item-name">${p.name}</div>
+                    <div class="tour-item-addr">${(p.dist).toFixed(1)} km</div>
+                </div>
+            `;
+            div.addEventListener('click', () => selectDestination(p));
+            list.appendChild(div);
+        });
+        card.classList.remove('hidden');
+    };
+
+    const getDistance = (l1, l2) => {
+        const R = 6371;
+        const dLat = (l2[1] - l1[1]) * Math.PI / 180;
+        const dLon = (l2[0] - l1[0]) * Math.PI / 180;
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(l1[1] * Math.PI / 180) * Math.cos(l2[1] * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    };
+
+    // Exclusive toggle logic
+    document.querySelectorAll('.tour-header').forEach(header => {
+        header.addEventListener('click', () => {
+            const targetId = header.getAttribute('data-target');
+            const targetCard = document.getElementById(targetId);
+            const wasCollapsed = targetCard.classList.contains('collapsed');
+
+            // Collapse all
+            document.querySelectorAll('.poi-card').forEach(c => c.classList.add('collapsed'));
+
+            // If it was collapsed, expand it
+            if (wasCollapsed) {
+                targetCard.classList.remove('collapsed');
+            }
+        });
+    });
+
+    loadPoiData();
     initMap();
 });
 

@@ -8,7 +8,7 @@
     <meta name="description" content="Next-generation web-based car navigation system powered by OpenStreetMap.">
 
     <!-- Google Fonts: Outfit for a modern, tech feel -->
-    <link rel="icon" href="icons/icon-512.png">
+    <link rel="icon" href="icons/icon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -29,208 +29,330 @@
 </head>
 
 <body>
+    <!-- Background Map -->
+    <div id="map"></div>
     <div id="app">
         <!-- PWA Install Prompt (top-left, shown when not in standalone mode) -->
-        <div id="pwa-prompt" class="glass hidden">
-            <div class="pwa-prompt-icon">🛸</div>
-            <div class="pwa-prompt-text">
-                <strong>Aura Drive</strong>
-                <span>ホーム画面に追加してください</span>
+
+        <div id="assistant-container">
+            <button id="btn-map-cycle" class="glass circle-btn" title="表示モード切替"></button>
+            <div id="gnss-status" class="glass circle-btn" title="GNSS状態">
+                <img src="icons/GPS.png" alt="gnss">
             </div>
-            <div class="pwa-prompt-actions">
-                <button id="btn-pwa-install">追加</button>
-                <button id="btn-pwa-dismiss">後で</button>
+            <div id="pwa-prompt" class="glass hidden">
+                <div class="pwa-prompt-icon"><img src="icons/icon.png" width="60" height="60"
+                        style="border-radius: 10px;"></div>
+                <div class="pwa-prompt-text">
+                    <strong>Aura Drive</strong>
+                    <span>ホーム画面に追加してください</span>
+                </div>
+                <div class="pwa-prompt-actions">
+                    <button id="btn-pwa-install">追加</button>
+                    <button id="btn-pwa-dismiss">後で</button>
+                </div>
+            </div>
+            <!-- Nearby POI Container (bottom-left) -->
+            <div id="nearby-poi-container">
+                <!-- Roadside Station (Tourist) -->
+                <div id="nearby-tour-card" class="glass poi-card hidden collapsed">
+                    <div class="tour-header" data-target="nearby-tour-card">
+                        <h2>観光案内</h2>
+                    </div>
+                    <div id="nearby-tour-list" class="history-list">
+                        <div class="history-empty">現在地を取得中...</div>
+                    </div>
+                </div>
+                <!-- Interchange (IC) -->
+                <div id="nearby-ic-card" class="glass poi-card hidden collapsed">
+                    <div class="tour-header" data-target="nearby-ic-card">
+                        <h2>高速入口</h2>
+                    </div>
+                    <div id="nearby-ic-list" class="history-list">
+                        <div class="history-empty">現在地を取得中...</div>
+                    </div>
+                </div>
+                <!-- Railway Station -->
+                <div id="nearby-station-card" class="glass poi-card hidden collapsed">
+                    <div class="tour-header" data-target="nearby-station-card">
+                        <h2>最寄り駅</h2>
+                    </div>
+                    <div id="nearby-station-list" class="history-list">
+                        <div class="history-empty">現在地を取得中...</div>
+                    </div>
+                </div>
             </div>
         </div>
-
-        <!-- Background Map -->
-        <div id="map"></div>
 
         <!-- Glass Overlay UI -->
-        <header class="top-bar glass">
-            <div class="search-container">
-                <i data-lucide="search" class="icon-search"></i>
-                <input type="text" id="dest-search" placeholder="目的地を検索..." autocomplete="off">
-                <button id="btn-clear-search" class="clear-btn hidden"><i data-lucide="x"></i></button>
-            </div>
-        </header>
+        <div id="center-container">
+            <div id="search-area">
+                <header class="search-bar ">
+                    <div class="search-container">
+                        <img src="icons/search.png" class="icon-search" alt="search">
+                        <input type="text" id="dest-search" placeholder="目的地を検索..." autocomplete="off">
+                        <button id="btn-clear-search" class="clear-btn hidden"><i data-lucide="x"></i></button>
+                        <button id="btn-voice-search" class="voice-btn" title="音声検索">
+                            <img src="icons/mic.png" alt="mic">
+                        </button>
+                    </div>
 
-        <!-- Search Results Dropdown -->
-        <div id="search-results" class="glass hidden"></div>
-
-        <!-- Route Info Banner -->
-        <div id="route-banner" class="glass hidden">
-            <div class="route-banner-info">
-                <i data-lucide="map-pin" class="route-pin-icon"></i>
-                <div class="route-dest-text">
-                    <span id="route-dest-name">---</span>
-                    <span id="route-summary">ルートを計算中...</span>
+                </header>
+                <!-- Search Results & History Overlay -->
+                <div id="search-overlay" class="hidden">
+                    <div id="search-results" class="hidden"></div>
                 </div>
             </div>
-            <div class="route-banner-actions">
-                <button id="btn-start-nav" class="btn-start-nav hidden">
-                    <i data-lucide="play"></i> 案内開始
+            <hooter class="glass">
+
+            </hooter>
+        </div>
+
+
+
+        <footer id="driver-container">
+            <!-- Search History Card -->
+            <div id="search-history-card" class="glass nav-card hidden">
+                <div class="tour-header">
+                    <h2>最近の検索</h2>
+                    <button id="btn-clear-history" title="履歴を削除"><img src="icons/trash.png" alt="clear"
+                            style="width:16px;height:16px;"></button>
+                </div>
+                <div id="history-list"></div>
+            </div>
+            <!-- Route Info Banner -->
+            <div id="nav-card-pause" class="glass hidden">
+                <div class="nav-card-pause-info">
+                    <img src="icons/pin.png" class="result-icon" alt="pin">
+                    <div class="route-dest-text">
+                        <h2 id="route-dest-name">---</h2>
+                        <div id="route-summary">ルートを計算中...</div>
+                    </div>
+                </div>
+                <div class="nav-card-pause-actions">
+                    <button id="btn-start-nav" class="btn-start-nav hidden">
+                        <i data-lucide="play"></i> 案内開始
+                    </button>
+                    <button id="btn-cancel-route" class="btn-stop-nav" title="案内停止">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            data-lucide="square" aria-hidden="true" class="lucide lucide-square">
+                            <rect width="18" height="18" x="3" y="3" rx="2"></rect>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Nav Info Popup + History Card: top-right, swaps based on navigation state -->
+            <div id="nav-info-popup" class="hidden">
+                <!-- Main Info Card -->
+                <div class="glass nav-card">
+                    <div class="nav-dest-label" id="nav-info-dest-name">---</div>
+                    <div class="h-divider" style="margin:10px 0"></div>
+                    <div class="popup-totals">
+                        <table class="popup-table">
+                            <tr>
+                                <th class="label">残り</th>
+                                <td class="popup-stat-val" id="nav-remaining">---km</td>
+                            </tr>
+                            <tr>
+                                <th class="label">到着</th>
+                                <td class="popup-stat-val" id="nav-eta-panel">--:--</td>
+                            </tr>
+                        </table>
+                        <button id="btn-stop-nav" class="btn-stop-nav" title="ナビ終了">
+                            <i data-lucide="square"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Next Turn Card -->
+                <div class="glass nav-card nav-card-next">
+                    <div class="nav-maneuver">
+                        <div class="nav-turn-box">
+                            <i data-lucide="arrow-up" id="nav-turn-icon"></i>
+                        </div>
+                        <div class="nav-step-info">
+                            <span class="nav-step-dist" id="nav-step-dist">---</span>
+                            <span class="nav-step-road" id="nav-step-road">---</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Control Panel: bottom-right vertical stack -->
+            <div id="ctrl-panel" class="glass">
+                <div class="ctrl-speed">
+                    <span class="label">SPEED</span>
+                    <span class="value" id="speed-val">0</span>
+                    <span class="unit">km/h</span>
+                </div>
+                <div class="ctrl-sep"></div>
+                <button class="control-btn-mini" id="btn-locate" title="現在地">
+                    <img src="icons/car-icon.png" alt="locate">
                 </button>
-                <button id="btn-cancel-route" title="ルートをキャンセル">
-                    <i data-lucide="x"></i>
+                <div class="ctrl-sep"></div>
+                <button class="control-btn-mini" id="btn-zoom-in" title="拡大">
+                    <i data-lucide="plus"></i>
                 </button>
-            </div>
-        </div>
+                <button class="control-btn-mini" id="btn-zoom-out" title="縮小">
+                    <i data-lucide="minus"></i>
+                </button>
+                <div class="ctrl-sep"></div>
+                <button class="control-btn-mini" id="btn-layers" title="レイヤー切替">
+                    <img src="icons/layer.png" alt="layers">
+                </button>
 
-        <!-- Nav Info Popup + History Card: top-right, swaps based on navigation state -->
-        <div id="nav-info-popup" class="hidden">
-            <!-- Main Info Card -->
-            <div class="glass nav-card">
-                <div class="nav-dest-label" id="nav-info-dest-name">---</div>
-                <div class="h-divider" style="margin:10px 0"></div>
-                <div class="popup-totals">
-                    <div class="popup-stat">
-                        <span class="label">残り</span>
-                        <span class="popup-stat-val" id="nav-remaining">---</span>
-                    </div>
-                    <div class="popup-stat">
-                        <span class="label">到着</span>
-                        <span class="popup-stat-val" id="nav-eta-panel">--:--</span>
-                    </div>
-                    <button id="btn-stop-nav" title="ナビ終了">
-                        <i data-lucide="square"></i>
-                    </button>
-                </div>
             </div>
 
-            <!-- Next Turn Card -->
-            <div class="glass nav-card nav-card-next">
-                <div class="nav-maneuver">
-                    <div class="nav-turn-box">
-                        <i data-lucide="arrow-up" id="nav-turn-icon"></i>
-                    </div>
-                    <div class="nav-step-info">
-                        <span class="nav-step-dist" id="nav-step-dist">---</span>
-                        <span class="nav-step-road" id="nav-step-road">---</span>
-                    </div>
-                </div>
-            </div>
-        </div>
+            <!-- Interaction Overlay (Search Results etc) -->
+            <div id="overlay-container" class="hidden"></div>
 
-        <!-- Search History Card: shown when not navigating -->
-        <div id="search-history-card" class="glass nav-card hidden">
-            <div class="history-header">
-                <span class="label" style="font-size:0.75rem">最近の目的地</span>
-                <button id="btn-clear-history" title="履歴を削除"><i data-lucide="trash-2"></i></button>
-            </div>
-            <div id="history-list"></div>
-        </div>
-
-        <!-- Control Panel: bottom-right vertical stack -->
-        <div id="ctrl-panel" class="glass">
-            <div class="ctrl-speed">
-                <span class="label">SPEED</span>
-                <span class="value" id="speed-val">0</span>
-                <span class="unit">km/h</span>
-            </div>
-            <div class="ctrl-sep"></div>
-            <button class="control-btn-mini" id="btn-locate" title="現在地">
-                <i data-lucide="navigation"></i>
-            </button>
-            <div class="ctrl-sep"></div>
-            <button class="control-btn-mini" id="btn-zoom-in" title="拡大">
-                <i data-lucide="plus"></i>
-            </button>
-            <button class="control-btn-mini" id="btn-zoom-out" title="縮小">
-                <i data-lucide="minus"></i>
-            </button>
-            <div class="ctrl-sep"></div>
-            <button class="control-btn-mini" id="btn-3d" title="3D表示切替">
-                <i data-lucide="box"></i>
-            </button>
-            <button class="control-btn-mini" id="btn-layers" title="レイヤー切替">
-                <i data-lucide="layers"></i>
-            </button>
-        </div>
-
-        <!-- Interaction Overlay (Search Results etc) -->
-        <div id="overlay-container" class="hidden"></div>
-
-        <!-- Layer Menu -->
-        <div id="layer-menu" class="glass hidden">
-            <div class="menu-header">
-                <h3>マップ表示設定</h3>
-                <button id="close-layers"><i data-lucide="x"></i></button>
-            </div>
-            <div class="layer-options">
-                <div class="layer-section">
-                    <p class="section-label">ベースマップ</p>
-                    <button class="layer-opt" data-style="day">
-                        <i data-lucide="sun"></i> <span>Dayモード</span>
-                    </button>
-                    <button class="layer-opt active" data-style="night">
-                        <i data-lucide="moon"></i> <span>ナイトモード</span>
-                    </button>
-                    <button class="layer-opt" data-style="satellite">
-                        <i data-lucide="globe"></i> <span>衛星写真</span>
-                    </button>
-                    <button class="layer-opt" data-style="gsi">
-                        <i data-lucide="map"></i> <span>国土地理院地図</span>
-                    </button>
+            <!-- Layer Menu -->
+            <div id="layer-menu" class="glass hidden">
+                <div class="menu-header">
+                    <h3>マップ表示設定</h3>
+                    <button id="close-layers"><i data-lucide="x"></i></button>
                 </div>
-                <div class="h-divider"></div>
-                <div class="layer-section">
-                    <p class="section-label">方位</p>
-                    <div class="layer-opt-group">
-                        <button class="view-opt active" id="view-north-up">
-                            <i data-lucide="compass"></i>北を上
+                <div class="layer-options">
+                    <div class="layer-section">
+                        <p class="section-label">ベースマップ</p>
+                        <button class="layer-opt" data-style="day">
+                            <img src="icons/day.png" alt="day"> <span>Dayモード</span>
                         </button>
-                        <button class="view-opt" id="view-heading-up">
-                            <i data-lucide="navigation"></i>進行方向
+                        <button class="layer-opt active" data-style="night">
+                            <img src="icons/night.png" alt="night"> <span>ナイトモード</span>
+                        </button>
+                        <button class="layer-opt" data-style="satellite">
+                            <img src="icons/satellite.png" alt="satellite"> <span>衛星写真</span>
+                        </button>
+                        <button class="layer-opt" data-style="gsi">
+                            <img src="icons/japan.png" alt="gsi"> <span>国土地理院地図</span>
                         </button>
                     </div>
-                </div>
-                <div class="layer-section">
-                    <p class="section-label">傾き</p>
-                    <div class="layer-opt-group">
-                        <button class="view-opt active" id="view-flat">
-                            <i data-lucide="square"></i>平面
+                    <div class="h-divider"></div>
+                    <div class="layer-section">
+                        <p class="section-label">方位</p>
+                        <div class="layer-opt-group">
+                            <button class="view-opt active" id="view-north-up">
+                                <img src="icons/north-up.png" class="menu-icon" alt="north">北を上
+                            </button>
+                            <button class="view-opt" id="view-heading-up">
+                                <img src="icons/car-icon.png" class="menu-icon" alt="heading">進行方向
+                            </button>
+                        </div>
+                    </div>
+                    <div class="layer-section">
+                        <p class="section-label">傾き</p>
+                        <div class="layer-opt-group">
+                            <button class="view-opt active" id="view-flat">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"
+                                    class="menu-icon">
+                                    <rect x="5" y="5" width="14" height="14" rx="1.5" />
+                                    <path d="M5 10h14M5 14h14M10 5v14M14 5v14" stroke-width="0.8" opacity="0.3" />
+                                </svg>平面
+                            </button>
+                            <button class="view-opt" id="view-tilt">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"
+                                    class="menu-icon">
+                                    <path d="M4 18L8 6h8l4 12H4z" />
+                                    <path d="M6.5 14h11M8.5 10h7M12 6v12M10 6l-3 12M14 6l3 12" stroke-width="0.8"
+                                        opacity="0.3" />
+                                </svg>俯角
+                            </button>
+                        </div>
+                    </div>
+                    <div class="h-divider"></div>
+                    <div class="layer-section">
+                        <p class="section-label">UI配置 (ハンドル位置)</p>
+                        <div class="layer-opt-group">
+                            <button class="view-opt active" id="view-rhd">
+                                <img src="icons/driver-right.png" class="menu-icon" alt="rhd">右ハンドル
+                            </button>
+                            <button class="view-opt" id="view-lhd">
+                                <img src="icons/driver-left.png" class="menu-icon" alt="lhd">左ハンドル
+                            </button>
+                        </div>
+                    </div>
+                    <div class="h-divider"></div>
+                    <div class="layer-section">
+                        <p class="section-label">追加情報</p>
+                        <button class="layer-opt overlay-toggle" id="toggle-highway" data-overlay="highway">
+                            <img src="icons/highway.png" alt="highway"> <span>高速道路を強調</span>
                         </button>
-                        <button class="view-opt" id="view-tilt">
-                            <i data-lucide="box"></i>俯角あり
+                        <button class="layer-opt overlay-toggle" id="toggle-railway" data-overlay="railway">
+                            <img src="icons/train.png" alt="train"> <span>鉄道路線</span>
+                        </button>
+                        <button class="layer-opt overlay-toggle" id="toggle-rain" data-overlay="rain">
+                            <img src="icons/rain.png" alt="rain"> <span>雨雲レーダー</span>
+                        </button>
+                        <button class="layer-opt overlay-toggle" id="toggle-topo" data-overlay="topo">
+                            <img src="icons/mountain.png" alt="topo"> <span>地形図（等高線）</span>
+                        </button>
+                        <button class="layer-opt overlay-toggle" id="toggle-cycling" data-overlay="cycling">
+                            <img src="icons/bicecle.png" alt="cycling"> <span>自転車レーン</span>
                         </button>
                     </div>
-                </div>
-                <div class="h-divider"></div>
-                <div class="layer-section">
-                    <p class="section-label">UI配置 (ハンドル位置)</p>
-                    <div class="layer-opt-group">
-                        <button class="view-opt active" id="view-rhd">
-                            <i data-lucide="align-right"></i>右ハンドル
-                        </button>
-                        <button class="view-opt" id="view-lhd">
-                            <i data-lucide="align-left"></i>左ハンドル
-                        </button>
+                    <div class="h-divider"></div>
+                    <div class="layer-section">
+                        <p class="section-label">データ提供元</p>
+                        <table>
+                            <tr>
+                                <th> 地図 </th>
+                                <td>
+                                    <a href="https://www.openstreetmap.org/" target="_blank">OpenStreetMap</a> <br>
+                                    <a href='https://gsi.go.jp' target='_blank'>国土地理院</a> <br>
+                                    <a href="https://maplibre.org/" target="_blank">MapLibre</a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th> GEOデータ </th>
+                                <td>
+                                    道の駅：<a href="https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-P35.html"
+                                        target="_blank">国土数値情報「道の駅データ」</a> 2019年 <br>
+                                    鉄道駅：<a href='https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N02-v2_3.html'
+                                        target='_blank'>国土数値情報「鉄道データ」</a> 令和2年 <br>
+                                    高速IC：<a href="https://nlftp.mlit.go.jp/ksj/gml/datalist/KsjTmplt-N06-v1_2.html"
+                                        target="_blank">国土数値情報「高速道路時系列データ」</a> 令和2年
+                                </td>
+                            </tr>
+                            <tr>
+                                <th> 検索/経路 </th>
+                                <td>
+                                    <a href="https://nominatim.org/" target="_blank">Nominatim</a> <br>
+                                    <a href="http://project-osrm.org/" target="_blank">OSRM</a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th> 気象/他 </th>
+                                <td>
+                                    <a href="https://www.rainviewer.com/" target="_blank">RainViewer</a> <br>
+                                    <a href="https://opentopomap.org/" target="_blank">OpenTopoMap</a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th> アイコン </th>
+                                <td> <a href="https://icon-pit.com/" target="_blank">icon-pit</a></td>
+                            </tr>
+                            <tr>
+                                <th> サウンド </th>
+                                <td> <a href="https://soundeffect-lab.info/" target="_blank">効果音ラボ</a></td>
+                            </tr>
+                            <tr>
+                                <th> フォント </th>
+                                <td> <a href="https://fonts.google.com/" target="_blank">Google Fonts</a></td>
+                            </tr>
+                            <tr>
+                                <th> 作者 </th>
+                                <td> @h-kz </td>
+                            </tr>
+                        </table>
                     </div>
-                </div>
-                <div class="h-divider"></div>
-                <div class="layer-section">
-                    <p class="section-label">追加情報</p>
-                    <button class="layer-opt overlay-toggle" id="toggle-highway" data-overlay="highway">
-                        <i data-lucide="zap"></i> <span>高速道路を強調</span>
-                    </button>
-                    <button class="layer-opt overlay-toggle" id="toggle-railway" data-overlay="railway">
-                        <i data-lucide="train"></i> <span>鉄道路線</span>
-                    </button>
-                    <button class="layer-opt overlay-toggle" id="toggle-rain" data-overlay="rain">
-                        <i data-lucide="cloud-rain"></i> <span>雨雲レーダー</span>
-                    </button>
-                    <button class="layer-opt overlay-toggle" id="toggle-topo" data-overlay="topo">
-                        <i data-lucide="mountain"></i> <span>地形図（等高線）</span>
-                    </button>
-                    <button class="layer-opt overlay-toggle" id="toggle-cycling" data-overlay="cycling">
-                        <i data-lucide="bike"></i> <span>自転車レーン</span>
-                    </button>
+
                 </div>
             </div>
-        </div>
     </div>
-
+    </div>
     <script src="app.js"></script>
     <script>
         // Service Worker Registration
