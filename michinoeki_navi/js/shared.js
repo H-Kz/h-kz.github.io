@@ -179,6 +179,9 @@ export const UI = {
         const networks = [
             { id: 'x', name: 'X', icon: 'X_logo-black.png' },
             { id: 'line', name: 'LINE', icon: 'line.png' },
+            { id: 'facebook', name: 'Facebook', icon: 'Facebook_Logo_Primary.png' },
+            { id: 'instagram', name: 'Instagram', icon: 'Instagram_Glyph_Gradient.png' },
+            { id: 'note', name: 'Note', icon: 'note_copy.png' },
             { id: 'copy', name: 'URLをコピー', icon: 'copy.png' }
         ];
 
@@ -196,6 +199,13 @@ export const UI = {
                     window.open(`https://twitter.com/intent/tweet?url=${url}&text=${text}`);
                 } else if (net.id === 'line') {
                     window.open(`https://line.me/R/msg/text/?${text}%20${url}`);
+                } else if (net.id === 'facebook') {
+                    window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`);
+                } else if (net.id === 'instagram') {
+                    // Instagramは直接のWebシェアURLがないため、アプリ起動を試みるか公式サイトへ
+                    window.open(`https://www.instagram.com/`);
+                } else if (net.id === 'note') {
+                    window.open(`https://note.com/intent/post?url=${url}&text=${text}`);
                 } else if (net.id === 'copy') {
                     navigator.clipboard.writeText(window.location.href);
                     alert('URLをコピーしました');
