@@ -109,6 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             restoreState();
             processUrlParams();
+            updateViewButtons();
         });
 
         // Stop following on manual drag
@@ -1187,14 +1188,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- PWA Installation ---
     let deferredPrompt;
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredPrompt = e;
-        // Show the custom prompt UI if not already in standalone mode
-        if (!window.matchMedia('(display-mode: standalone)').matches) {
+        if (!isStandalone) {
             document.getElementById('pwa-prompt').classList.remove('hidden');
         }
     });
+
+    if (isIOS && !isStandalone) {
+        const promptMsg = document.getElementById('pwa-prompt-msg');
+        if (promptMsg) promptMsg.textContent = '共有メニューから「ホーム画面に追加」してください';
+        const installBtn = document.getElementById('btn-pwa-install');
+        if (installBtn) installBtn.classList.add('hidden');
+        document.getElementById('pwa-prompt').classList.remove('hidden');
+    }
 
     document.getElementById('btn-pwa-install').addEventListener('click', async () => {
         if (deferredPrompt) {

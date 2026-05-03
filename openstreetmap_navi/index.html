@@ -35,7 +35,9 @@
         <!-- PWA Install Prompt (top-left, shown when not in standalone mode) -->
 
         <div id="assistant-container">
-            <button id="btn-map-cycle" class="glass circle-btn" title="表示モード切替"></button>
+            <button id="btn-map-cycle" class="glass circle-btn" title="表示モード切替">
+                <img src="icons/north-up.png" alt="north">
+            </button>
             <div id="gnss-status" class="glass circle-btn" title="GNSS状態">
                 <img src="icons/GPS.png" alt="gnss">
             </div>
@@ -43,7 +45,7 @@
                 <div class="pwa-prompt-icon"><img src="icons/icon.png"></div>
                 <div class="pwa-prompt-text">
                     <strong>Aura Drive</strong>
-                    <span>ホーム画面に追加してください</span>
+                    <span id="pwa-prompt-msg">ホーム画面に追加してください</span>
                 </div>
                 <div class="pwa-prompt-actions">
                     <button id="btn-pwa-install">追加</button>
