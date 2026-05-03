@@ -762,6 +762,7 @@ main {
 .location-status p {
     margin: 0;
     opacity: 0.8;
+    color: #e2e8f0;
 }
 
 .status-dot {
