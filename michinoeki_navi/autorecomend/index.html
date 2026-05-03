@@ -84,6 +84,14 @@
                 </div>
             </section>
 
+            <!-- 検索制御バー - フローティングからページ内固定に変更 -->
+            <div id="search-control-bar" class="hidden">
+                <button id="btn-toggle-auto" class="status-control-btn">
+                    <span class="status-indicator"></span>
+                    <span id="auto-status-text">現在地付近の道の駅を自動検索中…</span>
+                </button>
+            </div>
+
             <section id="nearby-stations" class="hidden">
                 <h2 class="section-title">周辺の道の駅</h2>
                 <div id="nearby-list" class="list-container">
@@ -98,14 +106,6 @@
                 <p>現在地: <span id="current-address">取得中...</span></p>
             </div>
         </footer>
-    </div>
-
-    <!-- 自動検索制御フローティングボタン -->
-    <div id="floating-control-bar" class="hidden">
-        <button id="btn-toggle-auto" class="btn-primary floating-status-btn">
-            <span class="status-indicator"></span>
-            <span id="auto-status-text">現在地付近の道の駅を自動検索中…</span>
-        </button>
     </div>
 
     <!-- 統合アクションボタンは JS (UI.initGlobalActions) で生成されます -->

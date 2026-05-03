@@ -194,7 +194,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // アメニティ
         const amenityConfigs = [
             { id: 'icon-toilet', key: 'P35_012', icon: 'toilet.png' },
-            { id: 'icon-restaurant', key: 'P35_013', icon: 'food.png' },
+            { id: 'icon-restaurant', key: 'P35_013', icon: 'restrant.png' },
             { id: 'icon-shop', key: 'P35_014', icon: 'shop.png' },
             { id: 'icon-ev', key: 'P35_026', icon: 'ev_charger.png' },
             { id: 'icon-etc2', key: 'etc2', icon: 'etc2.png' },
@@ -227,8 +227,8 @@ document.addEventListener('DOMContentLoaded', () => {
         mainContent.classList.remove('hidden');
         if (map) map.invalidateSize();
         footerBar.classList.remove('hidden');
-        if (document.getElementById('floating-control-bar')) {
-            document.getElementById('floating-control-bar').classList.remove('hidden');
+        if (document.getElementById('search-control-bar')) {
+            document.getElementById('search-control-bar').classList.remove('hidden');
         }
     }
 

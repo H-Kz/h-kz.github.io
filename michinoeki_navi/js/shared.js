@@ -12,8 +12,8 @@ export const Utils = {
         const dLat = (lat2 - lat1) * Math.PI / 180;
         const dLon = (lon2 - lon1) * Math.PI / 180;
         const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                  Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         return R * c;
     },
@@ -59,33 +59,38 @@ export const UI = {
         card.className = 'station-card';
         card.href = `${basePath}detail/index.html?stationid=${encodeURIComponent(props.P35_006)}`;
 
-        const infoDiv = document.createElement('div');
-        infoDiv.className = 'station-info';
-        
-        const infoTextDiv = document.createElement('div');
-        infoTextDiv.className = 'card-info-text';
+        const headerDiv = document.createElement('div');
+        headerDiv.className = 'card-header';
 
         const nameH2 = document.createElement('h2');
         nameH2.className = 'station-name';
         nameH2.textContent = props.P35_006;
-        infoTextDiv.appendChild(nameH2);
+        headerDiv.appendChild(nameH2);
+
+        const bodyDiv = document.createElement('div');
+        bodyDiv.className = 'card-body';
+
+        const metaDiv = document.createElement('div');
+        metaDiv.className = 'card-meta';
+
+        const metaTextGroup = document.createElement('div');
+        metaTextGroup.className = 'meta-text-group';
 
         const munP = document.createElement('p');
         munP.className = 'municipality-name';
         munP.textContent = `${props.P35_003} ${props.P35_004}`;
-        infoTextDiv.appendChild(munP);
+        metaTextGroup.appendChild(munP);
 
         if (feature.distance !== undefined && feature.distance !== null) {
             const distSpan = document.createElement('span');
             distSpan.className = 'list-distance';
             const distLabel = basePath.includes('detail') ? 'この駅から' : '現在地から';
             distSpan.innerHTML = `${distLabel} <strong>${feature.distance.toFixed(1)}</strong> km`;
-            infoTextDiv.appendChild(distSpan);
+            metaTextGroup.appendChild(distSpan);
         }
+        metaDiv.appendChild(metaTextGroup);
 
-        infoDiv.appendChild(infoTextDiv);
-
-        // Google Maps ボタンを情報の右側に追加
+        // Google Maps ボタンを地名＋距離のブロックに対して中央に追加
         const gmapsActive = Utils.getAmenityStatus(props, etc2Data, 'google_maps');
         if (gmapsActive) {
             const gmapsLink = document.createElement('a');
@@ -97,7 +102,7 @@ export const UI = {
             const gmapsImg = document.createElement('img');
             gmapsImg.src = `${basePath}icon/Google_Maps.png`;
             gmapsLink.appendChild(gmapsImg);
-            infoDiv.appendChild(gmapsLink);
+            metaDiv.appendChild(gmapsLink);
         }
 
         const amenitiesDiv = document.createElement('div');
@@ -105,7 +110,7 @@ export const UI = {
         
         const configs = [
             { key: 'P35_012', icon: 'toilet.png' },
-            { key: 'P35_013', icon: 'food.png' },
+            { key: 'P35_013', icon: 'restrant.png' },
             { key: 'P35_014', icon: 'shop.png' },
             { key: 'P35_026', icon: 'ev_charger.png' },
             { key: 'etc2', icon: 'etc2.png' },
@@ -138,8 +143,11 @@ export const UI = {
             amenitiesDiv.appendChild(box);
         });
 
-        card.appendChild(infoDiv);
-        card.appendChild(amenitiesDiv);
+        bodyDiv.appendChild(metaDiv);
+        bodyDiv.appendChild(amenitiesDiv);
+
+        card.appendChild(headerDiv);
+        card.appendChild(bodyDiv);
         return card;
     },
 
@@ -181,10 +189,10 @@ export const UI = {
         const shareBtn = document.createElement('div');
         shareBtn.className = 'share-main-btn';
         shareBtn.innerHTML = `<img src="${basePath}icon/share.png" alt="Share">`;
-        
+
         const menu = document.createElement('div');
         menu.className = 'share-menu';
-        
+
         const networks = [
             { id: 'x', name: 'X', icon: 'X_logo-black.png' },
             { id: 'line', name: 'LINE', icon: 'line.png' },

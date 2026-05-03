@@ -73,9 +73,9 @@ main {
     border-radius: var(--radius);
     padding: 20px;
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 8px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
     box-shadow: var(--card-shadow);
     transition: all 0.2s ease;
     text-decoration: none;
@@ -89,22 +89,37 @@ main {
     border-color: var(--primary);
 }
 
-.station-info {
-    flex: 1;
+.card-header {
+    width: 100%;
+}
+
+.card-body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 16px;
+    gap: 8px;
+    width: 100%;
 }
 
-.card-info-text {
+.card-meta {
     flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+}
+
+.meta-text-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
 .station-name {
     font-size: 20px;
     font-weight: 700;
-    margin-bottom: 4px;
+    margin-bottom: 0;
     color: var(--text-dark);
 }
 
@@ -116,7 +131,7 @@ main {
     background: var(--white);
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     display: flex;
-    align-items: center;
+    align-items: right;
     justify-content: center;
 }
 
@@ -133,7 +148,7 @@ main {
 .municipality-name {
     font-size: 14px;
     color: var(--text-light);
-    margin-bottom: 8px;
+    margin-bottom: 0;
 }
 
 .list-distance {
@@ -189,8 +204,10 @@ main {
         padding: 16px;
     }
 
-    .station-info {
-        width: 100%;
+    .card-body {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
     }
 
     .amenities {
@@ -347,8 +364,8 @@ main {
 #recommendation-container {
     width: 100%;
     max-width: 500px;
-    margin: 0 auto;
-    padding: 0 0 20px;
+    margin: 8px 0 auto;
+    padding: 0;
 }
 
 .section-title {
@@ -805,7 +822,7 @@ main {
     }
 
     #recommendation-container {
-        padding: 0 16px;
+        padding: 0;
     }
 }
 
@@ -963,41 +980,54 @@ main {
 }
 
 /* Auto Search Floating Bar */
-#floating-control-bar {
-    position: fixed;
-    bottom: 80px;
-    /* フッターの上 */
-    left: 0;
+#search-control-bar {
     width: 100%;
     display: flex;
     justify-content: center;
-    padding: 0 20px;
-    z-index: 1001;
-    pointer-events: none;
+    margin: 8px 0 8px;
+    padding: 0 16px;
     transition: all 0.3s ease;
 }
 
-#floating-control-bar.hidden {
-    opacity: 0;
-    transform: translateY(20px);
+#search-control-bar.hidden {
+    display: none;
 }
 
-.floating-status-btn {
+.status-control-btn {
     pointer-events: auto;
     background: linear-gradient(135deg, var(--primary) 0%, #1d4ed8 100%);
     backdrop-filter: blur(8px);
     border: none;
+    border-radius: 16px;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 12px;
-    padding: 10px 24px;
-    width: auto;
-    max-width: none;
-    box-shadow: 0 8px 32px rgba(37, 99, 235, 0.25);
+    padding: 12px 24px;
+    width: 100%;
+    max-width: 400px;
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+    cursor: pointer;
+    transition: all 0.3s ease;
 }
 
-.floating-status-btn.stopped {
-    background: rgba(100, 116, 139, 0.9);
+.status-control-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(37, 99, 235, 0.25);
+}
+
+.status-control-btn.stopped {
+    background: var(--white);
+    color: var(--text-dark);
+    box-shadow: var(--card-shadow);
+}
+
+[data-theme="dark"] .status-control-btn.stopped {
+    background: #1e293b;
+    color: var(--text-dark);
 }
 
 .status-indicator {
@@ -1009,7 +1039,7 @@ main {
     animation: pulse-green 2s infinite;
 }
 
-.floating-status-btn.stopped .status-indicator {
+.status-control-btn.stopped .status-indicator {
     background: #cbd5e1;
     box-shadow: none;
     animation: none;

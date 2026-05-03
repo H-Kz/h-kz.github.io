@@ -83,7 +83,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // アメニティ
         const amenityConfigs = [
             { id: 'icon-toilet', key: 'P35_012', icon: 'toilet.png' },
-            { id: 'icon-restaurant', key: 'P35_013', icon: 'food.png' },
+            { id: 'icon-restaurant', key: 'P35_013', icon: 'restrant.png' },
             { id: 'icon-shop', key: 'P35_014', icon: 'shop.png' },
             { id: 'icon-ev', key: 'P35_026', icon: 'ev_charger.png' },
             { id: 'icon-etc2', key: 'etc2', icon: 'etc2.png' },
