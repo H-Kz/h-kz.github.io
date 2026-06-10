@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Geolocation API Sample</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 16px; line-height: 1.6; }
+    button { font-size: 18px; padding: 12px 16px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #f3f3f3; }
+    .ok { color: green; }
+    .ng { color: crimson; }
+  </style>
+</head>
+<body>
+  <h1>Geolocation API サンプル</h1>
+
+  <p>
+    Android Chromeで現在位置を取得します。<br>
+    緯度・経度・標高など、取得可能な値を一覧表示します。
+  </p>
+
+  <button id="btn">現在位置を取得</button>
+
+  <p id="status">未取得</p>
+
+  <table>
+    <tbody id="result"></tbody>
+  </table>
+
+  <script>
+    const btn = document.getElementById("btn");
+    const statusEl = document.getElementById("status");
+    const resultEl = document.getElementById("result");
+
+    const rows = [
+      ["latitude", "緯度"],
+      ["longitude", "経度"],
+      ["altitude", "標高"],
+      ["accuracy", "緯度・経度の精度"],
+      ["altitudeAccuracy", "標高の精度"],
+      ["heading", "進行方向"],
+      ["speed", "速度"]
+    ];
+
+    function formatValue(key, value) {
+      if (value === null || value === undefined) return "取得不可 / null";
+
+      switch (key) {
+        case "latitude":
+        case "longitude":
+          return value + " 度";
+        case "altitude":
+        case "accuracy":
+        case "altitudeAccuracy":
+          return value + " m";
+        case "heading":
+          return value + " 度";
+        case "speed":
+          return value + " m/s";
+        default:
+          return String(value);
+      }
+    }
+
+    function showPosition(position) {
+      const c = position.coords;
+
+      statusEl.innerHTML = '<span class="ok">取得成功</span>';
+
+      const data = {
+        latitude: c.latitude,
+        longitude: c.longitude,
+        altitude: c.altitude,
+        accuracy: c.accuracy,
+        altitudeAccuracy: c.altitudeAccuracy,
+        heading: c.heading,
+        speed: c.speed,
+        timestamp: new Date(position.timestamp).toLocaleString()
+      };
+
+      resultEl.innerHTML = "";
+
+      rows.forEach(([key, label]) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <th>${label}<br><small>${key}</small></th>
+          <td>${formatValue(key, data[key])}</td>
+        `;
+        resultEl.appendChild(tr);
+      });
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <th>取得日時<br><small>timestamp</small></th>
+        <td>${data.timestamp}</td>
+      `;
+      resultEl.appendChild(tr);
+    }
+
+    function showError(error) {
+      let message = "";
+
+      switch (error.code) {
+        case error.PERMISSION_DENIED:
+          message = "位置情報の利用が拒否されました。";
+          break;
+        case error.POSITION_UNAVAILABLE:
+          message = "位置情報を取得できませんでした。";
+          break;
+        case error.TIMEOUT:
+          message = "位置情報の取得がタイムアウトしました。";
+          break;
+        default:
+          message = "不明なエラーが発生しました。";
+      }
+
+      statusEl.innerHTML = `<span class="ng">${message}</span>`;
+    }
+
+    btn.addEventListener("click", () => {
+      if (!("geolocation" in navigator)) {
+        statusEl.innerHTML = '<span class="ng">このブラウザはGeolocation APIに対応していません。</span>';
+        return;
+      }
+
+      statusEl.textContent = "取得中...";
+
+      navigator.geolocation.getCurrentPosition(
+        showPosition,
+        showError,
+        {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 0
+        }
+      );
+    });
+  </script>
+</body>
+</html>
